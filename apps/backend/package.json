@@ -10,7 +10,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "nodemon": "^3.1.9"
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "add": "^2.0.6",
+    "nodemon": "^3.1.9",
+    "typescript": "^5.7.3"
   }
 }

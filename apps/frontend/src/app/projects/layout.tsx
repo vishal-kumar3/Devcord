@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Sidebar from '../../components/Sidebar/Sidebar';
 
 export const metadata: Metadata = {
   title: '',
@@ -10,5 +11,10 @@ export default function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <div className='relative flex'>
+      <Sidebar />
+      {children}
+    </div>
+  )
 }
