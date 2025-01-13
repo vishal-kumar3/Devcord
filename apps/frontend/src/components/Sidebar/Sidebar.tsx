@@ -25,7 +25,7 @@ const Sidebar = () => {
   ]
 
   return (
-    <div className="bg-neutral-800 sticky top-0 flex flex-col gap-2 items-center py-2 h-screen w-[75px]">
+    <div className="bg-neutral-800 sticky top-0 flex flex-col gap-3 items-center py-2 h-screen w-[75px]">
       <ProjectLink
         project={{
           id: "",
