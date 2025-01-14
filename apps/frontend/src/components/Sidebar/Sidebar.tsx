@@ -28,6 +28,7 @@ const Sidebar = () => {
 
   return (
     <div className="bg-neutral-800 sticky top-0 flex flex-col gap-3 items-center py-2 h-screen w-[75px]">
+      {/* Ye button ka link update krte rehna h jaise last dm pe shift ho jana chahiye */}
       <ProjectLink
         project={{
           id: "",
