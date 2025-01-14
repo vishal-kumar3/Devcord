@@ -15,13 +15,13 @@ const Sidebar = () => {
     {
       id: "2",
       name: "DevChat",
-      image: "/discord.jpg",
+      image: "/images/discord.jpg",
       channel: "2"
     },
     {
       id: "1",
       name: "DevCord",
-      image: "/devcord.jpg",
+      image: "/images/devcord.jpg",
       channel: "1",
     }
   ]
@@ -33,7 +33,7 @@ const Sidebar = () => {
         project={{
           id: "",
           name: "DM",
-          image: "/devcord.jpg",
+          image: "/images/devcord.jpg",
         }}
       />
       <Separator className="w-[50%] bg-neutral-700" orientation="horizontal" decorative={true} />

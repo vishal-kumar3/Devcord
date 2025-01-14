@@ -3,11 +3,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Input } from "../ui/input"
 import { cn } from "../../lib/utils"
 import { nav } from "../../data/design"
+import Image from "next/image"
 
 const HomeSidebar = () => {
   return (
     <div className="relative bg-neutral-700 h-screen">
-      {/* WIP: Searchbar will be here */}
       <div className={cn("flex justify-center items-center border-b-2 border-neutral-800 w-full", `h-[${nav.height}]`)}>
         <Input
           placeholder="Search"
@@ -20,9 +20,9 @@ const HomeSidebar = () => {
           <DMButton name="Shop" image="" href="/p/store" />
         </div>
         <div className="space-y-1 text-sm">
-          <div className="text-neutral-400 font-semibold">
+          <div className="text-neutral-400 flex justify-between font-semibold">
             <p className="">DIRECT MESSAGE</p>
-            {/* WIP: Add icon */}
+            <Image src="/icons/Plus.svg" alt="+" width={20} height={20} />
           </div>
           <DMButton name="Vishal Kumar" image="" href="/p/user/1" />
           <DMButton name="Vishal Kumar" image="" href="/p/user/1" />
@@ -75,8 +75,8 @@ const DMButton = ({ name, image, href }: DMButtonProps) => {
         </Avatar>
         <div>{name}</div>
       </div>
-      <button className="relative z-50 hover:bg-red-500">
-        X
+      <button className="relative z-50">
+        <Image src="/icons/Close.svg" className="text-green-500" alt="x" width={20} height={20} />
       </button>
     </Link>
   )
