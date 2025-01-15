@@ -1,17 +1,15 @@
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Input } from "../ui/input"
-import { cn } from "../../lib/utils"
-import { nav } from "../../data/design"
 import Image from "next/image"
 
 const HomeSidebar = () => {
   return (
-    <div className="relative bg-neutral-700 h-screen">
-      <div className={cn("flex justify-center items-center border-b-2 border-neutral-800 w-full", `h-[${nav.height}]`)}>
+    <div className="relative bg-back-two h-screen">
+      <div className="flex justify-center items-center border-b-2 border-divider w-full h-nav">
         <Input
           placeholder="Search"
-          className="w-[90%] h-[70%] bg-neutral-800 border-none text-neutral-400"
+          className="w-[90%] h-[70%] bg-neutral-800 border-none text-secondary"
         />
       </div>
       <div className="p-2 space-y-2">

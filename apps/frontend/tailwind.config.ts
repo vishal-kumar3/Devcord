@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-
+import tailwindcssAnimate from 'tailwindcss-animate';
 export default {
     darkMode: ["class"],
     content: [
@@ -11,8 +11,21 @@ export default {
   	extend: {
   		colors: {
   			background: 'hsl(var(--background))',
-  			foreground: 'hsl(var(--foreground))',
-  			card: {
+        foreground: 'hsl(var(--foreground))',
+        back: {
+          one: 'var(--back-one)',
+          two: 'var(--back-two)',
+          three: 'var(--back-three)',
+          four: 'var(--back-four)',
+        },
+        text: {
+          selected: 'var(--text-selected)',
+          muted: 'var(--text-muted)',
+          hovered: 'var(--text-hovered)',
+          secondary: 'var(--text-secondary)',
+        },
+        divider: 'var(--back-one)',
+        card: {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'
   			},
@@ -65,8 +78,13 @@ export default {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
-  		}
+      },
+      spacing: {
+        nav: 'calc(50px)',
+        sidebar: 'calc(270px)',
+        miniSidebar: 'calc(75px)',
+      },
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate],
 } satisfies Config;

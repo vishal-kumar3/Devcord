@@ -13,7 +13,7 @@ export default function Layout({
 }) {
   return (
     <div className="h-screen flex-1 flex">
-      <div className="w-[270px]">
+      <div className="w-sidebar">
         <HomeSidebar />
       </div>
       {children}

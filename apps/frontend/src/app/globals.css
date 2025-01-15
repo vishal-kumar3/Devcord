@@ -6,6 +6,58 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+
+/* Color Palette */
+:root {
+  /* Background Colors */
+  --back-one: #2E2E2E;
+  --back-two: #363636;
+  --back-three: #404040;
+  --back-four: #555555;
+
+  /* Text Colors */
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0B0B0;
+  --text-muted: #808080;
+  --text-hovered: #A0A0A0;
+  --text-selected: #FFFFFF;
+
+  /* Interactive Elements */
+  --button-background: #7289DA;
+  --button-background-hovered: #5A73A1;
+  --button-text: #FFFFFF;
+  --button-text-hovered: #E3E3E3;
+  --link: #7289DA;
+  --link-hovered: #5A73A1;
+
+  /* Status and Notifications */
+  --status-online: #43B581;
+  --status-idle: #F8A61C;
+  --status-do-not-disturb: #F04747;
+  --status-offline: #747F8D;
+
+  /* Dividers and Borders */
+  --divider: #1E1E1E;
+  --border-default: #404040;
+  --border-hovered: #555555;
+
+  /* Alert and Notification Colors */
+  --alert-success: #43B581;
+  --alert-error: #F04747;
+  --alert-warning: #FEE75C;
+
+  --nav: 50px
+  --sidebar: 270px
+}
+
+.nav {
+  height: "50px"
+}
+
+.sidebar {
+  width: "270px"
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
