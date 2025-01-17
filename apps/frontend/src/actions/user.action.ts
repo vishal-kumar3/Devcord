@@ -7,8 +7,8 @@ export const createUser = async (githubId: string, githubUsername: string) => {
 
   const user = await prisma.user.create({
     data: {
-      githubId,
-      username: githubUsername
+      githubId: `${githubId}`,
+      username: `${githubUsername}`
     }
   }).catch((err) => {
     console.error(err)
@@ -23,10 +23,10 @@ export const getUserFromGithubId = async (githubId: string) => {
 
   const user = await prisma.user.findUnique({
     where: {
-      githubId
+      githubId: `${githubId}`
     }
   }).catch((err) => {
-    console.error(err)
+    console.error(err.stack)
     return null;
   })
 
