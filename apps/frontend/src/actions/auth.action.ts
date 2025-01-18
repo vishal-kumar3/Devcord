@@ -17,6 +17,6 @@ export const login = async () => {
     maxAge: 60 * 10,
     sameSite: "lax"
   });
-  
-  redirect(redirect_url)
+
+  return redirect(redirect_url)
 }

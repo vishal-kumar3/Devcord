@@ -11,7 +11,7 @@ export const createUser = async (githubId: string, githubUsername: string) => {
       username: `${githubUsername}`
     }
   }).catch((err) => {
-    console.error(err)
+    console.error(err.stack)
     return null;
   })
 
