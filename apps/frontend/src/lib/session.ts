@@ -1,11 +1,13 @@
-import type { User, Session } from "@prisma/client";
+"use server"
+import type { Session } from "@prisma/client";
 import { prisma } from "@/db/prisma";
 import { encodeBase32LowerCaseNoPadding, encodeHexLowerCase } from "@oslojs/encoding";
 import { sha256 } from "@oslojs/crypto/sha2";
 import { cookies } from "next/headers";
 import { cache } from "react";
+import { SessionValidationResult } from "../types/auth.type";
 
-export function generateSessionToken(): string {
+export async function generateSessionToken(): Promise<string> {
   const bytes = new Uint8Array(20);
   crypto.getRandomValues(bytes);
   const token = encodeBase32LowerCaseNoPadding(bytes);
@@ -92,7 +94,3 @@ export const getCurrentSession = cache(async (): Promise<SessionValidationResult
   const result = await validateSessionToken(token);
   return result;
 });
-
-export type SessionValidationResult =
-  | { session: Session; user: User }
-  | { session: null; user: null };
