@@ -8,6 +8,7 @@ export const createUser = async (githubId: string, githubUsername: string) => {
   const user = await prisma.user.create({
     data: {
       githubId: `${githubId}`,
+      github_username: `${githubUsername}`,
       username: `${githubUsername}`
     }
   }).catch((err) => {

@@ -4,8 +4,10 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   const state = generateState();
-  const url = github.createAuthorizationURL(state, []);
-  
+
+  const scope = ["repo", "user", "offline_access"];
+  const url = github.createAuthorizationURL(state, scope);
+
   return NextResponse.json({
     redirect_url: url.toString(),
     github_state: state,

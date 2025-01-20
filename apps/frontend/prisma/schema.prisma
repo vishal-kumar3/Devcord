@@ -14,16 +14,52 @@ datasource db {
 }
 
 model User {
-  id       Int       @id @default(autoincrement())
-  githubId String   @unique
-  username String   @unique
+  id              String    @id @default(cuid())
+
+  githubId        String    @unique
+  github_username String
+  username        String    @unique
+  
+  name            String?
+  email           String?   @unique
+  github_token    String?
+  avatar          String?
+  banner          String?
+  boi             String?
+  role            Role      @default(USER)
+
+  projects        Project[]
   sessions Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Project {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  icon        String?
+  banner      String?
+  repo        String  @unique
+
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Session {
   id        String   @id
-  userId    Int
+  userId    String
   expiresAt DateTime
 
-  user      User     @relation(references: [id], fields: [userId], onDelete: Cascade)
+  user User @relation(references: [id], fields: [userId], onDelete: Cascade)
 }

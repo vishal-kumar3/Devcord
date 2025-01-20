@@ -14,31 +14,37 @@ export async function GET(request: Request): Promise<Response> {
   const state = url.searchParams.get("state");
   const cookieStore = await cookies();
   const storedState = cookieStore.get("github_oauth_state")?.value ?? null;
+
   if (code === null || state === null || storedState === null) {
     return NextResponse.redirect(new URL(`/auth?error=${encodeURIComponent(AuthResponseMsg.InvalidRequest)}`, request.url));
   }
+
   if (state !== storedState) {
     return NextResponse.redirect(new URL(`/auth?error=${encodeURIComponent(AuthResponseMsg.InvalidRequest)}`, request.url));
   }
 
+
   let tokens: OAuth2Tokens;
   try {
     tokens = await github.validateAuthorizationCode(code)
+    console.log("Github Tokens:- ",tokens)
   } catch (e) {
     // Invalid code or client credentials
     return NextResponse.redirect(new URL(`/auth?error=${encodeURIComponent(AuthResponseMsg.InvalidClientCredentials)}`, request.url));
   }
+
   const githubUserResponse = await fetch("https://api.github.com/user", {
     headers: {
       Authorization: `Bearer ${tokens.accessToken()}`
     }
   });
   const githubUser = await githubUserResponse.json();
+  console.log("Github User:- ",githubUser)
   const githubUserId = githubUser.id;
   const githubUsername = githubUser.login;
 
-  const existingUser = await getUserFromGithubId(githubUserId);
 
+  const existingUser = await getUserFromGithubId(githubUserId);
   if (existingUser !== null) {
     const sessionToken = await generateSessionToken();
     const session = await createSession(sessionToken, existingUser.id);
@@ -46,11 +52,13 @@ export async function GET(request: Request): Promise<Response> {
     return NextResponse.redirect(new URL("/p", request.url));
   }
 
+
   const user = await createUser(githubUserId, githubUsername);
 
   if (user === null) {
     return NextResponse.redirect(new URL(`/auth?error=${encodeURIComponent(AuthResponseMsg.InternalServerError)}`, request.url));
   }
+
 
   const sessionToken = await generateSessionToken();
   const session = await createSession(sessionToken, user.id);
