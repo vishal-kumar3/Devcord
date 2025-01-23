@@ -15,9 +15,9 @@ export async function generateSessionToken(): Promise<string> {
 }
 
 export async function createSession(token: string, userId: string): Promise<Session> {
-  const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
+  // const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
   const session: Session = {
-    id: sessionId,
+    id: token,
     userId,
     expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30)
   };

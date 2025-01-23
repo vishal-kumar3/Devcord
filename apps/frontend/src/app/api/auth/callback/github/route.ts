@@ -53,7 +53,7 @@ export async function GET(request: Request): Promise<Response> {
   }
 
 
-  const user = await createUser(githubUserId, githubUsername);
+  const user = await createUser(githubUserId, githubUsername, tokens);
 
   if (user === null) {
     return NextResponse.redirect(new URL(`/auth?error=${encodeURIComponent(AuthResponseMsg.InternalServerError)}`, request.url));

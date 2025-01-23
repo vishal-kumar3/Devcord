@@ -7,6 +7,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Separator } from "../ui/separator"
+import { CreateProjectButton } from "./CreateProjectButton"
 
 const Sidebar = () => {
 
@@ -42,23 +43,11 @@ const Sidebar = () => {
           <ProjectLink key={project.id} project={project} />
         ))
       }
-      <button className="size-[60px] group hover:bg-blue-500 bg-neutral-700 rounded-[50%] hover:rounded-[35%] transition-all ease-linear duration-150 delay-0">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          width={35}
-          height={35}
-          color={"#000000"}
-          fill={"none"}
-          className="mx-auto text-blue-500 group-hover:text-neutral-700 transition-all ease-linear duration-150 delay-0"
-        >
-          <path d="M12 4V20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M4 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
+      <CreateProjectButton />
     </div>
   )
 }
+
 
 type ProjectLinkProps = {
   id: string

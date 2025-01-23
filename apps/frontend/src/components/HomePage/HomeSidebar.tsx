@@ -2,8 +2,35 @@ import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Input } from "../ui/input"
 import Image from "next/image"
+import { prisma } from "../../db/prisma"
+import { cookies } from "next/headers"
+import { User } from "@prisma/client"
+import { CreatePersonalConversation } from "./CreatePersonalConversation"
+import { getConversationByUserId } from "../../actions/conversation.action"
 
-const HomeSidebar = () => {
+const HomeSidebar = async () => {
+
+  const cookie = await cookies()
+  const session = cookie.get('session')
+  if (!session) return null
+
+  const loggedUser: User | null = (await prisma.session.findUnique({
+    where: {
+      id: session.value
+    },
+    select: {
+      user: true
+    }
+  }).catch((err) => {
+    console.error("Error while fetuching user using session", err)
+    return null
+  })
+  )?.user || null
+
+  if (!session || !loggedUser) return null
+
+  const conversations = await getConversationByUserId(loggedUser.id)
+
   return (
     <div className="relative bg-back-two h-screen">
       <div className="flex justify-center items-center border-b-2 border-divider w-full h-nav">
@@ -20,22 +47,26 @@ const HomeSidebar = () => {
         <div className="space-y-1 text-sm">
           <div className="text-neutral-400 flex justify-between font-semibold">
             <p className="">DIRECT MESSAGE</p>
-            <Image src="/icons/Plus.svg" alt="+" width={20} height={20} />
+            <CreatePersonalConversation />
           </div>
-          <DMButton name="Vishal Kumar" image="" href="/p/user/1" />
-          <DMButton name="Vishal Kumar" image="" href="/p/user/1" />
-          <DMButton name="Vishal Kumar" image="" href="/p/user/1" />
+          {
+            conversations?.map((conversation) => {
+              return (
+                <DMButton key={conversation.id} name={conversation.name!} image="" href={`/p/user/${conversation.id}`} />
+              )
+            })
+          }
         </div>
       </div>
       {/* My Account */}
       <div className="absolute bottom-0 w-full">
-        <AccountCard />
+        <AccountCard user={loggedUser} />
       </div>
     </div>
   )
 }
 
-const AccountCard = () => {
+const AccountCard = ({ user }: { user: User }) => {
   return (
     <div className="flex items-center gap-2 bg-neutral-800 bg-opacity-70 p-2">
       <Avatar
@@ -45,8 +76,9 @@ const AccountCard = () => {
         <AvatarFallback>{''}</AvatarFallback>
       </Avatar>
       <div className="">
-        <p className="text-lg leading-none">Vishal Kumar</p>
-        <p className="text-sm text-neutral-400 leading-none">Holla whatsuppp</p>
+        <p className="text-lg leading-none">{user.username}</p>
+        <p className="text-sm text-neutral-400 leading-none">{user.id}</p>
+        <p className="text-sm text-neutral-400 leading-none">{user.boi || ""}</p>
       </div>
       <div>
         {/* WIP: animated svg here:- mute, headphone, settings */}

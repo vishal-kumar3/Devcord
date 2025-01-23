@@ -19,17 +19,19 @@ model User {
   githubId        String    @unique
   github_username String
   username        String    @unique
-  
-  name            String?
+
   email           String?   @unique
+  name            String?
   github_token    String?
   avatar          String?
   banner          String?
   boi             String?
-  role            Role      @default(USER)
 
+  role            Role      @default(USER)
   projects        Project[]
-  sessions Session[]
+  sessions        Session[]
+  conversations   UserConversation[]
+  Messages        Message[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -41,7 +43,7 @@ enum Role {
 }
 
 model Project {
-  id          Int     @id @default(autoincrement())
+  id          String     @id @default(cuid())
   name        String
   description String?
   icon        String?
@@ -62,4 +64,41 @@ model Session {
   expiresAt DateTime
 
   user User @relation(references: [id], fields: [userId], onDelete: Cascade)
+}
+
+
+model Conversation {
+  id              String          @id @default(cuid())
+  name            String?         // Only used for group chats
+  isPersonal      Boolean         @default(false) // true for personal chat, false for group chat
+
+  messages        Message[]
+  users           UserConversation[] // Track users in a conversation
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model UserConversation {
+  userId          String
+  conversationId  String
+  joinedAt        DateTime        @default(now())
+
+  user            User            @relation(fields: [userId], references: [id])
+  conversation    Conversation    @relation(fields: [conversationId], references: [id])
+
+  @@id([userId, conversationId])
+  @@unique([userId, conversationId]) // Prevent a user from being in the same conversation multiple times
+}
+
+model Message {
+  id              String             @id @default(cuid())
+  content         String
+  senderId        String
+  conversationId  String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  sender          User            @relation(fields: [senderId], references: [id])
+  conversation    Conversation    @relation(fields: [conversationId], references: [id])
 }
