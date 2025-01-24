@@ -22,7 +22,7 @@ const HomeSidebar = async () => {
       user: true
     }
   }).catch((err) => {
-    console.error("Error while fetuching user using session", err)
+    console.error("Error while fetuching user using session", err.stack)
     return null
   })
   )?.user || null

@@ -11,7 +11,7 @@ export const token = cache(async (id: string = "cm66369pi0000cpyhpsh2ialn") => {
       id: "cm66369pi0000cpyhpsh2ialn"
     }
   }).catch(err => {
-    console.log(err)
+    console.log(err.stack)
     return { error: "User not found", github_token: null }
   })
 
@@ -74,7 +74,7 @@ export const getUserById = async (id: string = "cm66369pi0000cpyhpsh2ialn") => {
       id: id
     }
   }).catch(err => {
-    console.log(err)
+    console.log(err.stack)
     return { error: "User not found", user: null }
   })
 

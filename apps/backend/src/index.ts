@@ -1,13 +1,15 @@
-import { app } from "./app.js";
+import { app, server, io } from "./app.js";
 
 import dotenv from 'dotenv'
+import { setupSocket } from "./socket.js";
 dotenv.config({
   path: './.env'
 })
 
+setupSocket(io)
 
-app.listen(process.env.PORT || 8000, () => {
-  console.log(`server is running at ${process.env.PORT || 8000}`)
+server.listen(process.env.PORT || 8001, () => {
+  console.log(`server is running at ${process.env.PORT || 8001}`)
 })
 
 

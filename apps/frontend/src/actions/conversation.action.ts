@@ -16,7 +16,7 @@ export const createConversation = async ({ user }: { user: { id: string, usernam
   const isPersonal = user.length == 2
   let name = ''
   const convUser = user.map((user) => {
-    name += ` ${user.username} `
+    name += loggedInUser.username !== user.username ? ` ${user.username} ` : ''
     return { userId: user.id }
   })
 
@@ -26,7 +26,7 @@ export const createConversation = async ({ user }: { user: { id: string, usernam
   const conversation = await prisma.conversation.create({
     data: {
       isPersonal,
-      // name: `$`,
+      name: name,
       users: {
         createMany: {
           data: convUser

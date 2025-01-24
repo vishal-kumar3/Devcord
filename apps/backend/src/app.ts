@@ -1,7 +1,10 @@
 import express from "express";
 import cors from 'cors';
 import cookieParser from "cookie-parser";
-
+import { createServer } from "http";
+import { Server } from 'socket.io'
+import { createAdapter } from "@socket.io/redis-streams-adapter";
+import redis from "./config/redis.config.js";
 
 const app = express()
 
@@ -9,20 +12,21 @@ app.use(cors({
     origin: process.env.CORS_ORIGIN,
     credentials: true,
 }))
-
 app.use(express.json({
     limit: "20mb"
 }))
-
-// ye walla url ke liye h
-// nested objects ke liye extended
-app.use(express.urlencoded({extended: true, limit: "20mb"}))
-
-// agar koi file kuch save krna ho to usko public folder me save krna
+app.use(express.urlencoded({ extended: true, limit: "20mb" }))
 app.use(express.static("public"))
-
-// reading or setting cookie in user browser
 app.use(cookieParser())
+
+const server = createServer(app)
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    credentials: true
+  },
+  adapter: createAdapter(redis)
+})
 
 
 // importing routers
@@ -31,4 +35,4 @@ app.use(cookieParser())
 // declaring routes
 // app.use("/api/v1/users", userRouter)
 
-export { app }
+export { app, io, server }

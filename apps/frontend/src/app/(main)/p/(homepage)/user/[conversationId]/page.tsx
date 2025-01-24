@@ -1,3 +1,4 @@
+import Chat from "../../../../../../components/Chat/chat";
 
 // app/projects/[id]/page.tsx
 export default async function Page({
@@ -11,6 +12,7 @@ export default async function Page({
   return (
     <div>
       Conversation Id:- {conversationId}
+      <Chat />
     </div>
   );
 }
