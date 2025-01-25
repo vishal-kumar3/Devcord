@@ -1,4 +1,6 @@
-import Chat from "../../../../../../components/Chat/chat";
+import Chat from "@/components/Chat/chat";
+import { getLoggedInUser } from "../../../../../../actions/user.action";
+import { notFound } from "next/navigation";
 
 // app/projects/[id]/page.tsx
 export default async function Page({
@@ -9,10 +11,12 @@ export default async function Page({
   const { conversationId } = await params
 
 
+  const loggedUser = await getLoggedInUser()
+  if(!loggedUser) return notFound()
   return (
     <div>
       Conversation Id:- {conversationId}
-      <Chat />
+      <Chat conversationId={conversationId} user={loggedUser} />
     </div>
   );
 }
