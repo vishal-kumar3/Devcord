@@ -3,7 +3,7 @@ import { Separator } from "../ui/separator"
 
 const HomeNavBar = () => {
   return (
-    <div className={`flex justify-between items-center px-4 border-b border-divider bg-back-three h-nav`}>
+    <div className={`flex justify-between items-center px-4 border-b border-divider bg-back-three min-h-nav`}>
       <div className="flex items-center gap-2">
         <Image src="/icons/Friends.svg" alt="logo" width={35} height={35} />
         <p className="">Friends</p>

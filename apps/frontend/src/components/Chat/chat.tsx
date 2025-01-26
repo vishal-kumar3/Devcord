@@ -4,8 +4,11 @@ import { useEffect, useState } from "react"
 import { getSocket } from "../../lib/socket.config"
 import { User } from "@prisma/client"
 import ChatHeader from "./ChatHeader"
+import Message from "./Message"
+import { MembersList } from "./MembersList"
+import { cn } from "../../lib/utils"
 
-type ChatMsg = {
+export type ChatMsg = {
   msg: string
   author: string
 }
@@ -13,6 +16,8 @@ type ChatMsg = {
 const Chat = ({ conversationId, user }: { conversationId: string, user: User }) => {
 
   const [chat, setChat] = useState<ChatMsg[]>([])
+  const [showMembersList, setShowMembersList] = useState(false)
+
   const socket = getSocket()
 
   useEffect(() => {
@@ -39,13 +44,21 @@ const Chat = ({ conversationId, user }: { conversationId: string, user: User }) 
 
   return (
     <div className="flex flex-col h-screen bg-back-three">
-      <ChatHeader />
-      <div className="flex-1">
-        {chat.map((msg, index) => {
-          return (
-            <div key={index}>{msg.msg} by {msg.author}</div>
-          )
-        })}
+      <ChatHeader setShowMembersList={setShowMembersList} />
+      <div className="flex flex-row h-full">
+        <div className="flex-1 flex flex-col justify-end p-4 gap-2">
+          {chat.map((msg, index) => {
+            return (
+              <Message key={index} message={msg} />
+            )
+          })}
+        </div>
+        <div className={cn(
+          "min-w-64 rounded-l-lg bg-back-two transition-transform duration-300",
+          showMembersList ? "translate-x-0" : "translate-x-full"
+        )}>
+          <MembersList />
+        </div>
       </div>
       <form
         className="p-4 flex gap-2"
@@ -61,6 +74,7 @@ const Chat = ({ conversationId, user }: { conversationId: string, user: User }) 
           placeholder="Type a message"
           type="text"
           name="msg"
+          autoComplete="off"
         />
         <button type="submit">Send</button>
       </form>

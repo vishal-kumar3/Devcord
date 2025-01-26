@@ -1,5 +1,5 @@
 import Chat from "@/components/Chat/chat";
-import { getLoggedInUser } from "../../../../../../actions/user.action";
+import { getLoggedInUser } from "@/actions/user.action";
 import { notFound } from "next/navigation";
 
 // app/projects/[id]/page.tsx

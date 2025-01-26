@@ -33,7 +33,7 @@ const HomeSidebar = async () => {
 
   return (
     <div className="relative bg-back-two h-screen">
-      <div className="flex justify-center items-center border-b-2 border-divider w-full h-nav">
+      <div className="flex justify-center items-center border-b-2 border-divider w-full min-h-nav">
         <Input
           placeholder="Search"
           className="w-[90%] h-[70%] bg-neutral-800 border-none text-secondary"

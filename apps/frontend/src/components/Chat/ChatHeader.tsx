@@ -1,9 +1,17 @@
 import Image from "next/image"
+import { Dispatch, SetStateAction } from "react"
 
+// WIP: Members icon will not appear in personal chat
 
-const ChatHeader = () => {
+const ChatHeader = (
+  { setShowMembersList }:
+    {
+      setShowMembersList: Dispatch<SetStateAction<boolean>>
+
+  }) => {
+
   return (
-    <div className="flex justify-between items-center px-4 border-b border-divider bg-back-three h-nav">
+    <div className="flex justify-between items-center px-4 border-b border-divider bg-back-three min-h-nav">
       <div className="flex items-center gap-2">
         <div className="size-[40px] bg-black rounded-full"></div>
         <p className="font-semibold">This is title</p>
@@ -12,7 +20,7 @@ const ChatHeader = () => {
         <Icon icon="Call" />
         <Icon icon="Video Call" />
         <Icon icon="Pin" />
-        <Icon icon="Members" />
+        <Icon icon="Members" action={() => setShowMembersList(prev => !prev)} />
       </div>
     </div>
   )
@@ -20,7 +28,7 @@ const ChatHeader = () => {
 
 export default ChatHeader
 
-const Icon = ({icon}: {icon: string}) => {
+const Icon = ({icon, action}: {icon: string, action?: () => void}) => {
   return (
     <Image
       src={`/icons/${icon}.svg`}
@@ -28,6 +36,7 @@ const Icon = ({icon}: {icon: string}) => {
       alt="Search"
       width={30}
       height={30}
+      onClick={action}
     />
   )
 }
