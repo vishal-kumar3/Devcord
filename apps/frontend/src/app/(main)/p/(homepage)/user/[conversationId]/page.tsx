@@ -14,8 +14,8 @@ export default async function Page({
   const loggedUser = await getLoggedInUser()
   if(!loggedUser) return notFound()
   return (
-    <div>
-      Conversation Id:- {conversationId}
+    <div className="w-full">
+      {/* Conversation Id:- {conversationId} */}
       <Chat conversationId={conversationId} user={loggedUser} />
     </div>
   );

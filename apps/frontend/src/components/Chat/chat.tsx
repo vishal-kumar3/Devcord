@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { getSocket } from "../../lib/socket.config"
 import { User } from "@prisma/client"
+import ChatHeader from "./ChatHeader"
 
 type ChatMsg = {
   msg: string
@@ -37,23 +38,31 @@ const Chat = ({ conversationId, user }: { conversationId: string, user: User }) 
 
 
   return (
-    <div>
-      <div>
+    <div className="flex flex-col h-screen bg-back-three">
+      <ChatHeader />
+      <div className="flex-1">
         {chat.map((msg, index) => {
           return (
             <div key={index}>{msg.msg} by {msg.author}</div>
           )
         })}
       </div>
-      <form action={(data) => {
+      <form
+        className="p-4 flex gap-2"
+        action={(data) => {
         const msg = data.get("msg") as string
         if (!msg) return
         const sendMsg = { msg: msg, author: user.username }
         socket.emit("message", sendMsg)
         // setChat((prevChat) => [...prevChat, sendMsg])
       }}>
-        <input type="text" name="msg" />
-        <button type="submit">Send Msg</button>
+        <input
+          className="flex-1 p-2 px-3 rounded-md outline-none border-none"
+          placeholder="Type a message"
+          type="text"
+          name="msg"
+        />
+        <button type="submit">Send</button>
       </form>
     </div>
   )
