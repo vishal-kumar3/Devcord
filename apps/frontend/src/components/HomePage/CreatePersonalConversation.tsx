@@ -17,6 +17,7 @@ import { searchByUsername } from "../../actions/user.action"
 import { debounce } from "../../utils/debounce"
 import { createConversation } from "../../actions/conversation.action"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 type selectedUserType = {
   id: string
@@ -28,7 +29,7 @@ export function CreatePersonalConversation() {
   const [searchUsername, setSearchUsername] = useState<string>("")
   const [users, setUsers] = useState<User[]>([])
   const [selectedUser, setSelectedUser] = useState<selectedUserType[]>([])
-  const  router = useRouter()
+  const router = useRouter()
 
   useEffect(() => {
     async function searchUser() {
@@ -118,10 +119,12 @@ export function CreatePersonalConversation() {
             className="w-full text-lg font-semibold"
             type="submit"
             onClick={async() => {
-              const conversation = await createConversation({ user: selectedUser })
-              console.log(conversation)
-              if (!conversation) return
-              router.push(`/p/user/${conversation?.id}`)
+              const { error, data } = await createConversation({ user: selectedUser })
+              if (!data || 'error' in data) {
+                return toast.error(error)
+              }
+              toast.success("Conversation created successfully")
+              return router.push(`/p/user/${data.id}`)
             }}
           >
             Start Chat

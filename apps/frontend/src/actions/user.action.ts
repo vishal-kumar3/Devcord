@@ -53,7 +53,7 @@ export const getLoggedInUser = cache(async () => {
       user: true
     }
   }).catch(err => {
-    console.error("Error while fetching loggedin usser")
+    console.error("Error while fetching loggedin usser:- ", err)
     return null
   })
 

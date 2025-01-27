@@ -13,7 +13,7 @@ export default function Layout({
 }) {
   return (
     <div className="h-screen flex-1 flex">
-      <div className="min-w-sidebar">
+      <div className="min-w-sidebar max-w-sidebar">
         <HomeSidebar />
       </div>
       {children}

@@ -7,13 +7,14 @@ import ChatHeader from "./ChatHeader"
 import Message from "./Message"
 import { MembersList } from "./MembersList"
 import { cn } from "../../lib/utils"
+import { ConversationWithMembers } from "../../types/conversation.type"
 
 export type ChatMsg = {
   msg: string
   author: string
 }
 
-const Chat = ({ conversationId, user }: { conversationId: string, user: User }) => {
+const Chat = ({ conversationId, conversation, user }: { conversationId: string, user: User, conversation: ConversationWithMembers }) => {
 
   const [chat, setChat] = useState<ChatMsg[]>([])
   const [showMembersList, setShowMembersList] = useState(false)
@@ -44,7 +45,7 @@ const Chat = ({ conversationId, user }: { conversationId: string, user: User }) 
 
   return (
     <div className="flex flex-col h-screen bg-back-three">
-      <ChatHeader setShowMembersList={setShowMembersList} />
+      <ChatHeader loggedUser={user} conversationDetails={conversation} setShowMembersList={setShowMembersList} />
       <div className="flex flex-row h-full">
         <div className="flex-1 flex flex-col justify-end p-4 gap-2">
           {chat.map((msg, index) => {
@@ -57,7 +58,7 @@ const Chat = ({ conversationId, user }: { conversationId: string, user: User }) 
           "min-w-64 rounded-l-lg bg-back-two transition-transform duration-300",
           showMembersList ? "translate-x-0" : "translate-x-full"
         )}>
-          <MembersList />
+          <MembersList membersList={conversation.users} />
         </div>
       </div>
       <form

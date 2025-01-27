@@ -2,11 +2,11 @@ import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Input } from "../ui/input"
 import Image from "next/image"
-import { prisma } from "../../db/prisma"
 import { cookies } from "next/headers"
 import { User } from "@prisma/client"
 import { CreatePersonalConversation } from "./CreatePersonalConversation"
 import { getConversationByUserId } from "../../actions/conversation.action"
+import { getLoggedInUser } from "../../actions/user.action"
 
 const HomeSidebar = async () => {
 
@@ -14,21 +14,8 @@ const HomeSidebar = async () => {
   const session = cookie.get('session')
   if (!session) return null
 
-  const loggedUser: User | null = (await prisma.session.findUnique({
-    where: {
-      id: session.value
-    },
-    select: {
-      user: true
-    }
-  }).catch((err) => {
-    console.error("Error while fetuching user using session", err.stack)
-    return null
-  })
-  )?.user || null
-
+  const loggedUser: User | null | undefined = await getLoggedInUser()
   if (!session || !loggedUser) return null
-
   const conversations = await getConversationByUserId(loggedUser.id)
 
   return (
@@ -52,7 +39,7 @@ const HomeSidebar = async () => {
           {
             conversations?.map((conversation) => {
               return (
-                <DMButton key={conversation.id} name={conversation.name!} image="" href={`/p/user/${conversation.id}`} />
+                <DMButton loggedUser={loggedUser} key={conversation.id} name={conversation.name!} image="" href={`/p/user/${conversation.id}`} />
               )
             })
           }
@@ -91,9 +78,10 @@ type DMButtonProps = {
   name: string
   image: string
   href: string
+  loggedUser?: User
 }
 
-const DMButton = ({ name, image, href }: DMButtonProps) => {
+const DMButton = ({ name, image, href, loggedUser }: DMButtonProps) => {
   return (
     <Link href={href} className="py-1 px-3 flex justify-between items-center rounded-lg hover:bg-white hover:bg-opacity-10 text-neutral-400 hover:text-neutral-300 font-semibold text-base transition-all ease-in">
       <div className="flex items-center gap-2">
@@ -103,9 +91,9 @@ const DMButton = ({ name, image, href }: DMButtonProps) => {
           <AvatarImage src={image} alt={''} />
           <AvatarFallback>{''}</AvatarFallback>
         </Avatar>
-        <div>{name}</div>
+        <div>{name.replace(loggedUser?.username || "", "")}</div>
       </div>
-      <button className="relative z-50">
+      <button className="min-w-[20px] min-h-[20px] flex justify-center items-center rounded-full bg-neutral-800 bg-opacity-70 hover:bg-neutral-700 hover:bg-opacity-70">
         <Image src="/icons/Close.svg" className="text-green-500" alt="x" width={20} height={20} />
       </button>
     </Link>
