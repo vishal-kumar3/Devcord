@@ -14,27 +14,51 @@ datasource db {
 }
 
 model User {
-  id              String    @id @default(cuid())
+  id              String     @id @default(cuid())
 
-  githubId        String    @unique
-  github_username String
-  username        String    @unique
+  githubId        String?    @unique
+  username        String?    @unique
 
-  email           String?   @unique
+  email           String     @unique
+  emailVerified   DateTime?
   name            String?
   github_token    String?
-  avatar          String?
+  image           String?
   banner          String?
   boi             String?
 
   role            Role      @default(USER)
+
+  accounts        Account[]
   projects        Project[]
-  sessions        Session[]
   conversations   UserConversation[]
   Messages        Message[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([id, username])
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
 }
 
 enum Role {
@@ -42,6 +66,8 @@ enum Role {
   ADMIN
 }
 
+
+// WIP: isPublic and if yes then user will require to ask for access to join project
 model Project {
   id          String     @id @default(cuid())
   name        String
@@ -57,15 +83,6 @@ model Project {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
-model Session {
-  id        String   @id
-  userId    String
-  expiresAt DateTime
-
-  user User @relation(references: [id], fields: [userId], onDelete: Cascade)
-}
-
 
 model Conversation {
   id              String          @id @default(cuid())

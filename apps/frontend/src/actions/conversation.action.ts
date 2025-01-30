@@ -1,6 +1,6 @@
 "use server"
 
-import { prisma } from "../db/prisma"
+import { prisma } from '@devcord/node-prisma';
 import { getLoggedInUser } from "./user.action"
 
 
@@ -14,7 +14,10 @@ export const createConversation = async ({ user }: { user: { id: string, usernam
   const loggedInUser = await getLoggedInUser()
   if (!loggedInUser) return { error: "User not logged in", data: null }
 
-  user.push({ id: loggedInUser?.id, username: loggedInUser?.username })
+  user.push({
+    id: loggedInUser?.id,
+    username: loggedInUser?.username as string
+  })
 
   const isPersonal = user.length == 2
   let name = ''

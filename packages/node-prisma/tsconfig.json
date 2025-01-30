@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "strict": true,
+    "declaration": true, // Generates .d.ts files
+    "declarationMap": true // Generates .d.ts.map files for better debugging
+  },
+  "include": [
+    "src/**/*"
+  ]
+}

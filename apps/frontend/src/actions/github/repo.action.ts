@@ -1,6 +1,6 @@
 "use server"
 import axios from "axios"
-import { prisma } from "../../db/prisma"
+import { prisma } from '@devcord/node-prisma';
 import { cache } from "react"
 // import { ErrorHandler } from "../../utils/ErrorHandler"
 

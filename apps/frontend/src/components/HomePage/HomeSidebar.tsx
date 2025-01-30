@@ -2,17 +2,15 @@ import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Input } from "../ui/input"
 import Image from "next/image"
-import { cookies } from "next/headers"
 import { User } from "@prisma/client"
 import { CreatePersonalConversation } from "./CreatePersonalConversation"
 import { getConversationByUserId } from "../../actions/conversation.action"
 import { getLoggedInUser } from "../../actions/user.action"
+import { auth } from "@/auth"
 
 const HomeSidebar = async () => {
 
-  const cookie = await cookies()
-  const session = cookie.get('session')
-  if (!session) return null
+  const session = await auth()
 
   const loggedUser: User | null | undefined = await getLoggedInUser()
   if (!session || !loggedUser) return null

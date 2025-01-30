@@ -1,27 +1,7 @@
 "use server"
-
-import { OAuth2Tokens } from "arctic";
-import { prisma } from "../db/prisma";
-import { cookies } from "next/headers";
+import { auth } from '@/auth';
+import { prisma } from '@devcord/node-prisma';
 import { cache } from "react";
-
-export const createUser = async (githubId: string, githubUsername: string, tokens: OAuth2Tokens) => {
-  if (!githubId || !githubUsername || !tokens) return null;
-
-  const user = await prisma.user.create({
-    data: {
-      githubId: `${githubId}`,
-      github_username: `${githubUsername}`,
-      username: `${githubUsername}`,
-      github_token: tokens.accessToken(),
-    }
-  }).catch((err) => {
-    console.error(err.stack)
-    return null;
-  })
-
-  return user;
-}
 
 export const getUserFromGithubId = async (githubId: string) => {
   if (!githubId) return null;
@@ -40,31 +20,26 @@ export const getUserFromGithubId = async (githubId: string) => {
 }
 
 export const getLoggedInUser = cache(async () => {
-  const cookie = await cookies()
-  const session = cookie.get('session')
+  const session = await auth()
 
   if(!session) return null
 
-  const loggedUser = await prisma.session.findUnique({
+  const user = await prisma.user.findUnique({
     where: {
-      id: session?.value
-    },
-    select: {
-      user: true
+      id: session?.user?.id
     }
   }).catch(err => {
-    console.error("Error while fetching loggedin usser:- ", err)
+    console.error("Error while fetching loggedin usser:- ", err.stack)
     return null
   })
 
-  return loggedUser?.user
+  return user
 })
-
 export const searchByUsername = async ({username, page=0}: {username: string, page: number}) => {
 
   if(!username || username === "") return null;
 
-  const loggedUser = await getLoggedInUser()
+  const session = await auth()
 
   const users = await prisma.user.findMany({
     where: {
@@ -72,7 +47,7 @@ export const searchByUsername = async ({username, page=0}: {username: string, pa
         contains: username
       },
       NOT: {
-        id: loggedUser?.id
+        id: session?.user?.id
       }
     },
     take: 10,

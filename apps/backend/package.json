@@ -21,7 +21,8 @@
     "@types/node": "^20.14.11",
     "concurrently": "^8.2.2",
     "nodemon": "^3.1.4",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "@devcord/node-prisma": "workspace:*"
   },
   "dependencies": {
     "@socket.io/redis-streams-adapter": "^0.2.2",

@@ -1,0 +1,32 @@
+# Stage 1: Build (using a smaller base image)
+FROM node:18-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Install pnpm globally and install dependencies
+COPY package.json pnpm-lock.yaml ./
+RUN npm install -g pnpm && pnpm install --frozen-lockfile
+
+# Copy only the necessary application files (avoids unnecessary invalidation of Docker cache)
+COPY . .
+
+# Run build (adjust this based on your actual build command if it's different)
+RUN pnpm build
+
+# Stage 2: Runtime (minimized final image)
+FROM node:18-alpine AS runtime
+
+# Set working directory in the final image
+WORKDIR /app
+
+# Copy only necessary files from the build stage to the runtime image
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+
+# Expose port
+EXPOSE 8000
+
+# Command to run your app
+CMD ["node", "dist/index.js"]

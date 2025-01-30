@@ -2,9 +2,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { FaGithub } from "react-icons/fa";
-import { login } from "@/actions/auth.action";
 import ErrorCard from "./ErrorCard";
 import { Suspense } from "react";
+import { signIn } from "../../../auth";
+import { DEFAULT_LOGIN_REDIRECT } from "../../../routes";
 
 const AuthPage = () => {
   return (
@@ -25,7 +26,10 @@ const AuthPage = () => {
           <Suspense>
             <ErrorCard />
           </Suspense>
-          <form action={login}>
+          <form action={async () => {
+            "use server"
+            await signIn("github", { redirectTo: DEFAULT_LOGIN_REDIRECT });
+          }}>
             <Button
               className="text-center w-full text-lg text-white"
               type="submit"
