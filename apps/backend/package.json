@@ -15,16 +15,17 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@devcord/node-prisma": "workspace:*",
     "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20.14.11",
     "concurrently": "^8.2.2",
     "nodemon": "^3.1.4",
-    "typescript": "^5.5.3",
-    "@devcord/node-prisma": "workspace:*"
+    "typescript": "^5.5.3"
   },
   "dependencies": {
+    "@devcord/node-prisma": "workspace:*",
     "@socket.io/redis-streams-adapter": "^0.2.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -32,6 +33,7 @@
     "express": "^4.19.2",
     "install": "^0.13.0",
     "ioredis": "^5.4.2",
+    "kafkajs": "^2.2.4",
     "socket.io": "^4.8.1"
   }
 }
