@@ -25,14 +25,15 @@ model User {
   github_token    String?
   image           String?
   banner          String?
-  boi             String?
+  bio             String?
 
   role            Role      @default(USER)
 
   accounts        Account[]
   projects        Project[]
   conversations   UserConversation[]
-  Messages        Message[]
+  messages        Message[]
+  reactions       Reaction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -86,11 +87,12 @@ model Project {
 
 model Conversation {
   id              String          @id @default(cuid())
-  name            String?         // Only used for group chats
-  isPersonal      Boolean         @default(false) // true for personal chat, false for group chat
+  name            String?
+  isPersonal      Boolean         @default(false)
+  isDM            Boolean         @default(false)
 
   messages        Message[]
-  users           UserConversation[] // Track users in a conversation
+  users           UserConversation[]
 
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -105,17 +107,44 @@ model UserConversation {
   conversation    Conversation    @relation(fields: [conversationId], references: [id])
 
   @@id([userId, conversationId])
-  @@unique([userId, conversationId]) // Prevent a user from being in the same conversation multiple times
+  @@unique([userId, conversationId])
 }
 
 model Message {
   id              String             @id @default(cuid())
-  content         String
-  senderId        String
+  content         String?
+  senderId        String?
   conversationId  String
+
+  fileUrl     String?
+  duration    Int?
+  systemData  String?
+
+  type            MessageType
+  sender          User?            @relation(fields: [senderId], references: [id])
+  conversation    Conversation    @relation(fields: [conversationId], references: [id])
+  reactions       Reaction[]
+
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+}
 
-  sender          User            @relation(fields: [senderId], references: [id])
-  conversation    Conversation    @relation(fields: [conversationId], references: [id])
+enum MessageType {
+  TEXT
+  VOICE_NOTE
+  IMAGE
+  VIDEO
+  FILE
+  SYSTEM
+}
+
+
+model Reaction {
+  id        Int      @id @default(autoincrement())
+  emoji     String
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id])
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
 }

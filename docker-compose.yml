@@ -1,6 +1,19 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:latest
+    container_name: postgres_server
+    environment:
+      POSTGRES_USER: devcord
+      POSTGRES_PASSWORD: devcord
+      POSTGRES_DB: devcord
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - postgres_network
   redis:
     image: redis/redis-stack-server:latest
     container_name: redis-stack
@@ -50,3 +63,9 @@ volumes:
     driver: local
   kafka_data:
     driver: local
+  postgres_data:
+
+
+networks:
+  postgres_network:
+    driver: bridge
