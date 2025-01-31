@@ -1,8 +1,12 @@
 
+interface IGithubError {
+    message: string;
+    status: string;
+    documentation_url: string;
+}
 
-// export const ErrorHandler = (error) =>  {
-//   if (error.response) {
-//     switch (error.response.status) {
+// export const githubErrorHandler = ({ message, status, documentation_url }: IGithubError) =>  {
+//     switch (Number(status)) {
 //       case 401:
 //         return { error: 'Unauthorized', msg: 'Invalid token'}
 //       case 403:
@@ -18,9 +22,21 @@
 //       default:
 //         return { status:error.response.status, error:error.response.data}
 //     }
-//   } else if (error.request) {
-//     return { error: 'Network Error:', msg:error.message}
-//   } else {
-//     return { error: 'Error:', msg:error.message}
-//   }
+    
 // }
+
+export interface IError {
+    message: string;
+    status?: number;
+    data?: Record<string, any>;
+}
+
+export class CustomError extends Error {
+    status: number
+    data: Record<string, any>
+    constructor(message: string, status?: number, data?: Record<string, any>) {
+        super(message)
+        this.status = status || 500
+        this.data = data || {}
+    }
+}
