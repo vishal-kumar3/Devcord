@@ -7,7 +7,7 @@ const Message = ({ message }: { message: ChatMsg }) => {
       <div className="size-[30px] bg-red-500 rounded-full"></div>
       <div>
         <div className="flex gap-1">
-          <div>{message.author}</div>
+          <div>{message.user.username}</div>
           <div>11:45 PM</div>
         </div>
         <div>{message.msg}</div>

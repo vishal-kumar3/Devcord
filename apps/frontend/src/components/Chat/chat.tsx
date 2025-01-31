@@ -11,7 +11,7 @@ import { ConversationWithMembers } from "../../types/conversation.type"
 
 export type ChatMsg = {
   msg: string
-  author: string
+  user: User
 }
 
 const Chat = ({ conversationId, conversation, user }: { conversationId: string, user: User, conversation: ConversationWithMembers }) => {
@@ -22,7 +22,6 @@ const Chat = ({ conversationId, conversation, user }: { conversationId: string, 
   const socket = getSocket()
 
   useEffect(() => {
-    // Connect to the socket once when the component mounts
     socket.connect()
     socket.auth = {
       room: conversationId
@@ -30,7 +29,7 @@ const Chat = ({ conversationId, conversation, user }: { conversationId: string, 
 
     const handleMessage = (data: ChatMsg) => {
       console.log("Socket msg is", data)
-      setChat((prevChat) => [...prevChat, { msg: data.msg, author: data.author }])
+      setChat((prevChat) => [...prevChat, { msg: data.msg, user: data.user }])
     }
 
     socket.on("message", handleMessage)
@@ -66,8 +65,8 @@ const Chat = ({ conversationId, conversation, user }: { conversationId: string, 
         action={(data) => {
         const msg = data.get("msg") as string
         if (!msg) return
-        const sendMsg = { msg: msg, author: user.username }
-        socket.emit("message", sendMsg)
+        const send = { msg: msg, user: user } as ChatMsg
+        socket.emit("message", send)
         // setChat((prevChat) => [...prevChat, sendMsg])
       }}>
         <input
