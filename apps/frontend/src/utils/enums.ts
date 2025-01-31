@@ -1,5 +1,6 @@
 enum Messages {
-    USER_NOT_FOUND = "User Not Found!"
+    USER_NOT_FOUND = "User Not Found!",
+    SUCCESS = "Success"
 }
 
 enum STATUS {
