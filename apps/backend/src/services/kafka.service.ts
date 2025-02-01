@@ -7,6 +7,8 @@ export type ChatMsg = {
   msg: string
   user: User
   conversationId: string
+  prevSender?: string
+  prevCreatedAt?: Date
 }
 
 export const produceMessage = async (topic: string, roomId: string, messages: any) => {
@@ -45,6 +47,8 @@ export const consumeMessage = async (topic: string, roomId: string, socket: Cust
             content: message_data.msg,
             senderId: message_data.user.id,
             conversationId: message_data.conversationId,
+            prevSender: message_data.prevSender || null,
+            prevCreatedAt: message_data.prevCreatedAt || null,
             type: "TEXT"
           },
           include: {

@@ -116,9 +116,12 @@ model Message {
   senderId        String?
   conversationId  String
 
-  fileUrl     String?
-  duration    Int?
-  systemData  String?
+  prevSender      String? // to combine msg from same sender
+  prevCreatedAt   DateTime? // to combine msg from same sender
+
+  fileUrl         String?
+  duration        Int?
+  systemData      String?
 
   type            MessageType
   sender          User?            @relation(fields: [senderId], references: [id])

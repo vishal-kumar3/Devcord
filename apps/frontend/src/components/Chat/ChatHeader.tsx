@@ -17,7 +17,7 @@ const ChatHeader = (
     loggedUser: User
   }) => {
 
-  const name = conversationDetails.name?.replace(loggedUser.username, "") as string
+  const name = conversationDetails.name?.replace(loggedUser.username as string, "") as string
 
   return (
     <div className="flex justify-between items-center px-4 border-b border-divider bg-back-three min-h-nav">

@@ -1,6 +1,7 @@
 import { User } from "@prisma/client"
 import { UserConversationWithUser } from "../../types/userConversation.type"
 import { Icon } from "./ChatHeader"
+import { ScrollArea } from "../ui/scroll-area"
 
 // WIP: socket for online offline, also ui
 // WIP: Add user to conversation
@@ -12,7 +13,7 @@ export function MembersList({ membersList }: { membersList: UserConversationWith
         <p className="font-semibold">Members - { membersList.length }</p>
         <Icon icon="Plus" />
       </div>
-      <div className="space-y-1">
+      <ScrollArea className="space-y-1">
         {
           membersList.map((member) => {
             return (
@@ -20,7 +21,7 @@ export function MembersList({ membersList }: { membersList: UserConversationWith
             )
           })
         }
-      </div>
+      </ScrollArea>
     </div>
   )
 }
