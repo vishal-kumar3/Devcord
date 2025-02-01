@@ -3,8 +3,9 @@ import { getLoggedInUser } from "@/actions/user.action";
 import { notFound } from "next/navigation";
 import { getConversationAndUserById } from "@/actions/conversation.action";
 import { ConversationWithMembers } from "@/types/conversation.type";
+import { getMessageByConversationId } from "@/actions/message.action";
+import { MessageWithSender } from "@/types/message.types";
 
-// app/projects/[id]/page.tsx
 export default async function Page({
   params
 }: {
@@ -21,9 +22,11 @@ export default async function Page({
   const conversation = data?.conversation as ConversationWithMembers
   if (!conversation) return notFound()
 
+  const chat_messages: MessageWithSender[] | null = await getMessageByConversationId(conversationId)
+  console.log("Chat messages are:- ", chat_messages)
   return (
     <div className="w-full">
-      <Chat conversationId={conversationId} conversation={conversation} user={loggedUser} />
+      <Chat chat_message={chat_messages} conversationId={conversationId} conversation={conversation} user={loggedUser} />
     </div>
   );
 }

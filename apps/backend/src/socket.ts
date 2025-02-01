@@ -21,8 +21,6 @@ export const setupSocket = (io: Server) => {
     console.log("The socket is connected:- ", socket.id);
 
     socket.on("message", (data) => {
-      console.log("Msg:- ", data);
-      io.to(socket.room).emit("message", data);
       produceMessage("chat", socket.room, data);
     });
 

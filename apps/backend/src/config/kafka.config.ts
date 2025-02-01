@@ -35,7 +35,7 @@ export const createConsumer = async (roomId: string) => {
 
   await consumer.subscribe({ topic: 'chat', fromBeginning: false });
 
-  console.log(`Consumer created for room: ${roomId}`);
+  console.log(`Consumer[${Object.keys(consumers).length}] created for room: ${roomId}`);
 
   return consumer;
 };

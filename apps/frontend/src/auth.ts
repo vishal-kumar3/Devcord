@@ -48,21 +48,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
 
     async signIn({ user, account, profile, email, credentials }) {
-      console.log("Account:- ", account)
-      if (account?.access_token) {
-        const updatedUser = await prisma.user.upsert({
+      if (account?.access_token && user.id) {
+        await prisma.user.update({
           where: { id: user.id },
-          create: {
-            email: user.email || profile?.email as string,
-            name: user.name || profile?.login as string,
-            username: user.name || profile?.login as string,
+          data: {
             github_token: account.access_token,
-            image: user.image || profile?.avatar_url as string,
             bio: profile?.bio as string,
           },
-          update: { github_token: account.access_token },
         }).catch((e) => {
-          console.error("Error updating user:- ", e)
+          console.error("Error updating user:- ", e.stack)
         })
       }
       return true;

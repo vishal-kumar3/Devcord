@@ -8,15 +8,25 @@ import Message from "./Message"
 import { MembersList } from "./MembersList"
 import { cn } from "../../lib/utils"
 import { ConversationWithMembers } from "../../types/conversation.type"
+import { MessageWithSender } from "@/types/message.types"
 
 export type ChatMsg = {
   msg: string
   user: User
+  conversationId: string
 }
 
-const Chat = ({ conversationId, conversation, user }: { conversationId: string, user: User, conversation: ConversationWithMembers }) => {
+const Chat = (
+  { conversationId, conversation, user, chat_message }
+    :
+    {
+      conversationId: string,
+      user: User,
+      conversation: ConversationWithMembers,
+      chat_message: MessageWithSender[] | null
+    }) => {
 
-  const [chat, setChat] = useState<ChatMsg[]>([])
+  const [chat, setChat] = useState<MessageWithSender[]>(chat_message || [])
   const [showMembersList, setShowMembersList] = useState(false)
 
   const socket = getSocket()
@@ -27,14 +37,13 @@ const Chat = ({ conversationId, conversation, user }: { conversationId: string, 
       room: conversationId
     }
 
-    const handleMessage = (data: ChatMsg) => {
+    const handleMessage = (data: MessageWithSender) => {
       console.log("Socket msg is", data)
-      setChat((prevChat) => [...prevChat, { msg: data.msg, user: data.user }])
+      setChat((prevChat) => [...prevChat, data])
     }
 
     socket.on("message", handleMessage)
 
-    // Cleanup the socket connection when the component unmounts
     return () => {
       socket.off("message", handleMessage)
       socket.disconnect()
@@ -63,11 +72,11 @@ const Chat = ({ conversationId, conversation, user }: { conversationId: string, 
       <form
         className="p-4 flex gap-2"
         action={(data) => {
-        const msg = data.get("msg") as string
-        if (!msg) return
-        const send = { msg: msg, user: user } as ChatMsg
-        socket.emit("message", send)
-        // setChat((prevChat) => [...prevChat, sendMsg])
+          const msg = data.get("msg") as string
+          if (msg) {
+            const send = { msg: msg, user: user, conversationId } as ChatMsg
+            socket.emit("message", send)
+          }
       }}>
         <input
           className="flex-1 p-2 px-3 rounded-md outline-none border-none"
