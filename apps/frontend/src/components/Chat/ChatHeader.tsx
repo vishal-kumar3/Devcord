@@ -3,6 +3,7 @@ import { Dispatch, SetStateAction, useState } from "react"
 import { ConversationWithMembers } from "../../types/conversation.type"
 import { User } from "@prisma/client"
 import { ChangeConversationName } from "../../actions/conversation.action"
+import { cn } from "@/lib/utils"
 
 // WIP: Members icon will not appear in personal chat
 // WIP: Send grp message declaring the grp name changed + by whom
@@ -18,6 +19,8 @@ const ChatHeader = (
   }) => {
 
   const name = conversationDetails.name?.replace(loggedUser.username as string, "") as string
+  const [inputValue, setInputValue] = useState(name);
+
 
   return (
     <div className="flex justify-between items-center px-4 border-b border-divider bg-back-three min-h-nav">
@@ -26,7 +29,12 @@ const ChatHeader = (
         {/* <p className="font-semibold">{conversationDetails.name?.replace(loggedUser.username, "")}</p> */}
         <input
           type="text"
-          defaultValue={name}
+          className={cn(
+            "border border-transparent focus:border-black bg-transparent outline-none min-w-[2ch] px-1 py-0.5 overflow-hidden whitespace-nowrap resize-none",
+          )}
+          style={{width: `${inputValue.length-1}ch`}}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
           onBlur={async (e) => {
             console.log("wah")
             if (e.target.value === name) return

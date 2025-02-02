@@ -6,18 +6,21 @@ import Image from "next/image"
 
 const Message = ({ message }: { message: MessageWithSender }) => {
   const combined_msg = message.prevSender == message.senderId
+  const duration_diff = (message.createdAt.getTime() - (message.prevCreatedAt?.getTime() ?? 0)) / (1000 * 60)
+
+  const combine = combined_msg && duration_diff < 10
 
   return (
     <div className={cn(
       "relative flex group px-4 gap-4 hover:bg-back-two transition-colors ease-in-out duration-200",
-      combined_msg ? null : "mt-4 pt-1"
+      combine ? null : "mt-4 pt-1"
     )}>
       <div className={cn(
         "rounded-full overflow-hidden",
-        combined_msg ? "w-[40px]" : "size-[40px]"
+        combine ? "w-[40px]" : "size-[40px]"
       )}>
         {
-          combined_msg ? null : (
+          combine ? null : (
             <Image
               src={message.sender?.image || "/images/avatar.png"}
               className="rounded-full cursor-pointer"
@@ -31,7 +34,7 @@ const Message = ({ message }: { message: MessageWithSender }) => {
       <div>
         <div className="flex gap-3 items-center">
           {
-            combined_msg ? null : (
+            combine ? null : (
               <>
                 <div className="text-text text-message-username font-semibold hover:underline cursor-pointer">
                   {message.sender?.name}
@@ -45,7 +48,7 @@ const Message = ({ message }: { message: MessageWithSender }) => {
         </div>
         <div className="relative group flex items-center">
           {
-            combined_msg && (
+            combine && (
               <div className="absolute -left-[50px] group-hover:opacity-100 opacity-0 text-message-time text-text-description">{formatTime(message.createdAt)}</div>
             )
           }
