@@ -11,24 +11,65 @@ import {
 } from "@/components/ui/dialog"
 import Image from "next/image"
 import { Input } from "../ui/input"
-import { useEffect, useState } from "react"
+import { Dispatch, SetStateAction, useEffect, useState } from "react"
 import { User } from "@prisma/client"
 import { searchByUsername } from "../../actions/user.action"
 import { debounce } from "../../utils/debounce"
 import { createConversation } from "../../actions/conversation.action"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { Check } from "lucide-react"
 
 type selectedUserType = {
   id: string
   username: string
 }
 
+const dummySelectedUser: selectedUserType[] = [
+  {
+    id: '1',
+    username: 'vishal1'
+  },
+  {
+    id: '2',
+    username: 'vishal2'
+  },
+  {
+    id: '3',
+    username: 'vishal3'
+  },
+  {
+    id: '4',
+    username: 'vishal4'
+  },
+  {
+    id: '5',
+    username: 'vishal5'
+  },
+  {
+    id: '6',
+    username: 'vishal6'
+  },
+  {
+    id: '7',
+    username: 'vishal7'
+  },
+  {
+    id: '8',
+    username: 'vishal8'
+  },
+  {
+    id: '9',
+    username: 'vishal9'
+  },
+]
+
+
 export function CreatePersonalConversation() {
 
   const [searchUsername, setSearchUsername] = useState<string>("")
   const [users, setUsers] = useState<User[]>([])
-  const [selectedUser, setSelectedUser] = useState<selectedUserType[]>([])
+  const [selectedUser, setSelectedUser] = useState<selectedUserType[]>(dummySelectedUser)
   const router = useRouter()
 
   useEffect(() => {
@@ -40,6 +81,12 @@ export function CreatePersonalConversation() {
     // searchUser()
     debounce(searchUser, 500)()
   }, [searchUsername])
+
+  const toggleUser = (user: selectedUserType) => {
+    setSelectedUser((prev) =>
+      prev.some((u) => u.id === user.id) ? prev.filter((u) => u.id !== user.id) : [...prev, user],
+    )
+  }
 
   return (
     <Dialog>
@@ -56,13 +103,7 @@ export function CreatePersonalConversation() {
           </DialogDescription>
         </DialogHeader>
         <div className="px-2 space-y-1">
-          <Input
-            placeholder="Enter a username"
-            className="bg-back-one text-white"
-            value={searchUsername}
-            onChange={(e) => setSearchUsername(e.target.value)}
-          />
-          <div>
+          <div className="bg-back-one flex flex-row flex-wrap gap-[1px] p-[4px]">
             {
               selectedUser.map((user) => {
                 return (
@@ -73,43 +114,37 @@ export function CreatePersonalConversation() {
                       })
                     }}
                     key={user.id}
-                    className="flex gap-2 bg-black/80 p-1 px-3 rounded-full group"
+                    className="flex gap-2 bg-black/80 p-1 px-3"
                   >
                     {user.username}
-                    <span className="hidden group-hover:block">x</span>
                   </button>
                 )
               })
             }
+            <InputBackspace setSelectedUser={setSelectedUser} searchUsername={searchUsername} setSearchUsername={setSearchUsername} />
           </div>
           <div>
             {users.map((user) => (
-              <div key={user.id} className="flex justify-between w-full py-1 px-3 bg-back-two">
+              <div
+                key={user.id}
+                className="flex justify-between cursor-pointer w-full py-1 px-3 bg-back-two"
+                onClick={() => {
+                  toggleUser({
+                    id: user.id,
+                    username: user.username as string
+                  })
+                }}
+              >
                 <div className="flex items-center gap-2">
                   {/* <Image src="/icons/User.svg" alt="user" width={20} height={20} /> */}
                   <span>{user.username}</span>
                 </div>
-                <Input
-                  type="checkbox"
-                  className="w-6 bg-back-four"
-                  onChange={(e) => {
-                    console.log(e.target.checked)
-                    if (selectedUser.length >= 10) return;
-                    if (e.target.checked) {
-                      setSelectedUser((prevSelectedUser) => {
-                        if (!prevSelectedUser.some((selUser) => selUser.id === user.id && selUser.username === user.username)) {
-                          return [...prevSelectedUser, { id: user.id, username: user.username }]
-                        }
-                        return prevSelectedUser
-                      })
-                    }
-                    else {
-                      setSelectedUser((prevSelectedUser) => {
-                        return prevSelectedUser.filter((selUser) => selUser.id !== user.id || selUser.username !== user.username)
-                      })
-                    }
-                  }}
-                />
+                <div
+                  className={`w-5 h-5 rounded-sm border ${selectedUser.some((u) => u.id === user.id) ? "bg-blue-500 border-blue-500" : "border-gray-500"
+                    } flex items-center justify-center`}
+                >
+                  {selectedUser.some((u) => u.id === user.id) && <Check size={14} className="text-white" />}
+                </div>
               </div>
             ))}
           </div>
@@ -132,5 +167,44 @@ export function CreatePersonalConversation() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+
+export const InputBackspace = (
+  { searchUsername, setSearchUsername, setSelectedUser }
+    : {
+      searchUsername: string,
+      setSearchUsername: Dispatch<SetStateAction<string>>,
+      setSelectedUser: Dispatch<SetStateAction<selectedUserType[]>>
+    }
+) => {
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Backspace' && searchUsername === "") {
+        setSelectedUser((prevSelectedUser) => {
+          return prevSelectedUser.slice(0, -1)
+        })
+
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  });
+
+
+  return (
+    <input
+      placeholder="Enter a username"
+      className="bg-back-one min-w-[10ch] flex-1 text-white px-3 outline-none border-none focus:outline-none"
+      value={searchUsername}
+      onChange={(e) => setSearchUsername(e.target.value)}
+      autoFocus
+    />
   )
 }

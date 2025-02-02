@@ -1,7 +1,6 @@
 import { User } from "@prisma/client"
 import { UserConversationWithUser } from "../../types/userConversation.type"
 import { Icon } from "./ChatHeader"
-import { ScrollArea } from "../ui/scroll-area"
 import Image from "next/image"
 
 // WIP: socket for online offline, also ui

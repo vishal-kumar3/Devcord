@@ -92,7 +92,7 @@ const Chat = (
         style={{ gridArea: "main" }}
         ref={chatContainerRef}
       >
-        <div className="w-full flex-1"></div>
+        <div className="w-full flex-1 min-h-[50px]"></div>
         {
           chat.map((msg, index) => {
             return (
