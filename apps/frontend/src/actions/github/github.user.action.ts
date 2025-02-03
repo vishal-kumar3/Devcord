@@ -1,25 +1,73 @@
-import axios, { AxiosRequestConfig } from "axios"
-import { getAuthUser } from "../auth.action"
+import { getAuthUser } from "../auth.action";
+import { Messages } from "@/utils/enums";
+import { githubApiHelper } from "@/utils/ApiHelpers";
+
+export const getFollowersAndFollowing = async (
+  page: number = 1,
+  per_page: number = 20,
+) => {
+  try {
+    const user = await getAuthUser();
+    if (!user) return { success: false, message: Messages.USER_NOT_FOUND };
+
+    console.log(user.github_token);
+
+    const followers = await githubApiHelper(
+      "/user/followers",
+      user.github_token,
+      {
+        page,
+        per_page,
+      },
+    );
+
+    const following = await githubApiHelper(
+      "/user/following",
+      user.github_token,
+      {
+        page,
+        per_page,
+      },
+    );
+
+    if (followers.success && following.success)
+      return {
+        followers: followers.data.data,
+        following: following.data.data,
+        success: true,
+        message: Messages.SUCCESS,
+      };
+    
+    else
+      return {
+        success: false,
+        message: { ...followers.data, ...following.data },
+      };
+  } catch (error) {
+    console.log(error);
+    return { success: false, message: error };
+  }
+};
 
 
-export const getFollowersAndFollowing = async (page: number = 1, per_page: number = 20) => {
+export const getTheAuthenticatedUser = async () => {
     try {
         const user = await getAuthUser()
-        if(!user) return { success: false, message: Messages.USER_NOT_FOUND }
-
-        const config: AxiosRequestConfig = {
-            headers: {
-                "Accept": "application/vnd.github+json",
-                "Authorization": `Bearer ${user.github_token}`
-            }
-        }
-        console.log(user.github_token)
-        const followers = await axios.get(`https://api.github.com/user/followers?page=${page}&per_page=${per_page}`, config)
-        const following = await axios.get(`https://api.github.com/user/following?page=${page}&per_page=${per_page}`, config)
-        return { followers: followers.data, following: following.data, success: true, message: Messages.SUCCESS }
-
+        const userResponse = await githubApiHelper("/user", user.github_token)
+        return userResponse
     } catch (error) {
-        console.log(error)
-        return { success: false, message: error }
+        console.log(error);
+        return { success: false, message: error };
+    }
+}
+
+export const getUserByUsername = async (username: string) => {
+    try {
+        const user = await getAuthUser()
+        const userResponse = await githubApiHelper(`/users/${username}`, user.github_token)
+        return userResponse
+    } catch (error) {
+        console.log(error);
+        return { success: false, message: error };
     }
 }
