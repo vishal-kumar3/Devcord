@@ -63,7 +63,7 @@ const AccountCard = ({ user }: { user: User }) => {
       <div className="">
         <p className="text-lg leading-none">{user.username}</p>
         <p className="text-sm text-neutral-400 leading-none">{user.id}</p>
-        <p className="text-sm text-neutral-400 leading-none">{user.boi || ""}</p>
+        <p className="text-sm text-neutral-400 leading-none">{user.bio || ""}</p>
       </div>
       <div>
         {/* WIP: animated svg here:- mute, headphone, settings */}

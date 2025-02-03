@@ -1,18 +1,29 @@
 import { User } from "@prisma/client"
 import { UserConversationWithUser } from "../../types/userConversation.type"
-import { Icon } from "./ChatHeader"
-import { ScrollArea } from "../ui/scroll-area"
 import Image from "next/image"
+import { selectedUserType } from "../HomePage/CreatePersonalConversation"
+import { AddMembers } from "../HomePage/AddMembers"
 
 // WIP: socket for online offline, also ui
 // WIP: Add user to conversation
+// use revalide to membersList action and also optimistic update
 
-export function MembersList({ membersList }: { membersList: UserConversationWithUser[]}) {
+export function MembersList({ membersList }: { membersList: UserConversationWithUser[] }) {
+
+  const restrictedUser: selectedUserType[] = []
+
+  membersList.map((member) => {
+    restrictedUser.push({
+      id: member.userId,
+      username: member.user.username as string
+    })
+  })
+
   return (
     <div className="p-4">
       <div className="flex justify-between items-center">
         <p className="font-semibold">Members - { membersList.length }</p>
-        <Icon icon="Plus" />
+        <AddMembers restrictedUser={restrictedUser} conversationId={membersList[0].conversationId} />
       </div>
       <div className="overflow-y-auto h-full space-y-1">
         {

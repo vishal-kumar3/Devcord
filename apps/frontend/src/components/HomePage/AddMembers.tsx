@@ -15,7 +15,6 @@ import { User } from "@prisma/client"
 import { searchByUsernameForConversation } from "../../actions/user.action"
 import { debounce } from "../../utils/debounce"
 import { AddMembersToConversation, createConversation, getConversationByUserIdsInDM } from "../../actions/conversation.action"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Check } from "lucide-react"
 import Link from "next/link"
@@ -24,9 +23,15 @@ export type selectedUserType = {
   id: string
   username: string
 }
+
+type CreatePersonalConversationProps = {
+  restrictedUser: selectedUserType[]
+  conversationId: string
+}
+
 // WIP: Jaha click kiya waha search box aaye
 
-export function CreatePersonalConversation() {
+export function AddMembers({ restrictedUser, conversationId }: CreatePersonalConversationProps) {
 
   const [searchUsername, setSearchUsername] = useState<string>("")
   const [users, setUsers] = useState<User[]>([])
@@ -34,12 +39,12 @@ export function CreatePersonalConversation() {
 
   useEffect(() => {
     async function searchUser() {
-      const users = await searchByUsernameForConversation({ username: searchUsername, page: 0 })
+      const users = await searchByUsernameForConversation({ username: searchUsername, page: 0, restrictedUser: restrictedUser })
       setUsers(users || [])
     }
 
     debounce(searchUser, 500)()
-  }, [searchUsername])
+  }, [searchUsername, restrictedUser])
 
   const toggleUser = (user: selectedUserType) => {
     setSelectedUser((prev) =>
@@ -57,10 +62,10 @@ export function CreatePersonalConversation() {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            Start a conversation
+            Add Members
           </DialogTitle>
           <DialogDescription>
-            You can add {9 - selectedUser.length} more friends
+            You can add {9 - selectedUser.length - (restrictedUser?.length || 0)} more friends
           </DialogDescription>
         </DialogHeader>
         <div className="px-2 space-y-1">
@@ -113,9 +118,23 @@ export function CreatePersonalConversation() {
         </div>
         <DialogFooter>
           <div className="flex flex-col gap-2 w-full">
-            <StartChatButton
+            <AddMembersButton
               selectedUser={selectedUser}
+              buttonTitle={"Add Members"}
+              restrictedUser={restrictedUser}
+              conversationId={conversationId}
             />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                disabled
+                className="w-full text-base bg-back-three p-2 cursor-text placeholder:font-semibold"
+                placeholder="OR, SEND AN INVITE LINK"
+              />
+              <Button className="text-base">Create</Button>
+            </div>
+            {/* WIP: Add invite link logic and show below line only when link generated! */}
+            {/* <div className="text-sm text-text-description">Invite Link valid for 24 hrs</div> */}
           </div>
         </DialogFooter>
       </DialogContent>
@@ -123,34 +142,31 @@ export function CreatePersonalConversation() {
   )
 }
 
-export const StartChatButton = (
-  { selectedUser }
+export const AddMembersButton = (
+  { selectedUser, buttonTitle, restrictedUser = [], conversationId }
     :
-    { selectedUser: selectedUserType[] }
+    { selectedUser: selectedUserType[], buttonTitle: string, restrictedUser?: selectedUserType[], conversationId: string }
 ) => {
-  const router = useRouter()
-  const [existingConversation, setExistingConversation] = useState<existingConversationType[]>([])
 
-  const createConversationHandler = async ({ user }: { user: selectedUserType[] }) => {
-    if (selectedUser.length === 0) {
-      return toast.error("Select atleast one user to start conversation")
+  const addMemberHandler = async ({ user, restrictedUser }: { user: selectedUserType[], restrictedUser: selectedUserType[] }) => {
+    if (!restrictedUser || !conversationId) return
+
+    if (user.length + restrictedUser.length === 0) {
+      return toast.error("Select atleast one user to add")
     }
-    if (selectedUser.length > 10) {
+
+    if (user.length + restrictedUser.length > 10) {
       return toast.error("You can't add more than 10 users")
     }
-    const conversation = await createConversation({ user: selectedUser })
-    console.log(selectedUser)
-    if (!conversation) {
-      return toast.error("Error while creating conversation")
+
+    const updatedConversation = await AddMembersToConversation({ conversationId, users: user.map((u) => { return { id: u.id, username: u.username } }) })
+
+    if (!updatedConversation) {
+      return toast.error("Error while adding members")
     }
-    toast.success("Conversation created successfully")
-    return router.push(`/p/user/${conversation.id}`)
-  }
-
-  // WIP: Work on existing conversation
-
-  const findExistingConversation = async () => {
-    const conversation = await getConversationByUserIdsInDM(selectedUser.map((user) => user.id))
+    console.log("updatedConversation:- ", updatedConversation)
+    toast.success("Members added successfully")
+    return updatedConversation
   }
 
   return (
@@ -158,11 +174,12 @@ export const StartChatButton = (
       className="w-full text-lg font-semibold"
       type="submit"
       onClick={() => {
-        // setExistingConversation([])
-        createConversationHandler({ user: selectedUser })
+        console.log(selectedUser, conversationId, restrictedUser)
+        if(!conversationId || restrictedUser.length === 0) return
+          addMemberHandler({ user: selectedUser, restrictedUser })
       }}
     >
-      Start Chat
+      {buttonTitle}
     </Button>
   )
 }
@@ -189,21 +206,26 @@ export const ExistingConversationButton = ({ selectedUser }: { selectedUser: sel
         })])
       }
     }
+    setExistingConversation([])
     getExistingConversation()
   }, [selectedUser])
+
+  console.log("existingConversation")
 
   return (
     <div className="p-1 flex flex-row flex-wrap gap-1">
       {
         existingConversation.map((conversation) => {
           return (
-            <Link
-              href={`/p/user/${conversation.id}`}
-              key={conversation.id}
-              className="text-base font-semibold bg-back-two p-2"
-            >
-              {conversation.name}
-            </Link>
+            <>
+              <Link
+                href={`/p/user/${conversation.id}`}
+                key={conversation.id}
+                className="text-base font-semibold bg-back-two p-2"
+              >
+                {conversation.name}
+              </Link>
+            </>
           )
         })
       }

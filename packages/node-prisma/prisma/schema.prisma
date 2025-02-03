@@ -110,6 +110,8 @@ model UserConversation {
   @@unique([userId, conversationId])
 }
 
+// WIP: create schema for invite token
+
 model Message {
   id              String             @id @default(cuid())
   content         String?

@@ -1,5 +1,6 @@
 "use server"
 import { auth } from '@/auth';
+import { selectedUserType } from '@/components/HomePage/CreatePersonalConversation';
 import { prisma } from '@devcord/node-prisma';
 import { cache } from "react";
 
@@ -35,27 +36,30 @@ export const getLoggedInUser = cache(async () => {
 
   return user
 })
-export const searchByUsername = async ({username, page=0}: {username: string, page: number}) => {
+export const searchByUsernameForConversation = async ({username, restrictedUser = [], page = 0}: {username: string, page: number, restrictedUser?: selectedUserType[]}) => {
 
-  if(!username || username === "") return null;
+  if (!username || username.trim() === "") return null;
 
-  const session = await auth()
+  const session = await auth();
+  if (!session) return null;
 
   const users = await prisma.user.findMany({
     where: {
       username: {
-        contains: username
+        contains: username,
       },
       NOT: {
-        id: session?.user?.id
-      }
+        id: {
+          in: [session?.user?.id, ...restrictedUser.map((user) => user.id)]
+        },
+      },
     },
     take: 10,
     skip: page * 10,
   }).catch((err) => {
-    console.error(err.stack)
+    console.error(err.stack);
     return null;
-  })
+  });
 
   return users;
 }
