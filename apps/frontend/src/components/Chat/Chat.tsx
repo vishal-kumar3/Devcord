@@ -9,6 +9,10 @@ import { cn } from "../../lib/utils"
 import { ConversationWithMembers } from "../../types/conversation.type"
 import { MessageWithSender } from "@/types/message.types"
 import { User } from "@prisma/client"
+import { Socket } from "socket.io-client"
+import Image from "next/image"
+import { SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const.js"
+import { SendMessageInput } from "./SendMessageInput"
 
 export type ChatMsg = {
   msg: string
@@ -16,6 +20,12 @@ export type ChatMsg = {
   conversationId: string
   prevSender?: string
   prevCreatedAt?: Date
+}
+
+export type TypingEvent = {
+  user: User
+  conversationId: string
+  typing: boolean
 }
 
 const Chat = (
@@ -30,13 +40,29 @@ const Chat = (
       conversationId: string,
       user: User,
       conversation: ConversationWithMembers,
-      chat_message: MessageWithSender[] | null
+      chat_message: MessageWithSender[]
     }
 ) => {
 
   const [chat, setChat] = useState<MessageWithSender[]>(chat_message || [])
   const [showMembersList, setShowMembersList] = useState(false)
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [membersList, setMembersList] = useState<User>()
+
+
+  const handleMessageSend = (data: FormData) => {
+    const msg = data.get("msg") as string
+    if (msg) {
+      const send = {
+        msg: msg,
+        user: user,
+        conversationId,
+        prevSender: chat.length !== 0 ? chat.slice(-1)[0].senderId : null,
+        prevCreatedAt: chat.length !== 0 ? chat.slice(-1)[0].createdAt : null
+      } as ChatMsg
+      socket.emit(SOCKET_EVENTS.MESSAGE, send)
+    }
+  }
 
   const socket = getSocket()
 
@@ -50,13 +76,14 @@ const Chat = (
       setChat((prevChat) => [...prevChat, data])
     }
 
-    socket.on("message", handleMessage)
+    socket.on(SOCKET_EVENTS.MESSAGE, handleMessage)
 
     return () => {
-      socket.off("message", handleMessage)
+      socket.off(SOCKET_EVENTS.MESSAGE, handleMessage)
+      // socket.off(SOCKET_EVENTS.TYPING, handleTyping)
       socket.disconnect()
     }
-  }, [conversationId, socket])
+  }, [conversationId, socket, user.id])
 
   useEffect(() => {
     // WIP: Scroll only when user sends msg not when recieves -> just show down arrow you recieved number of msg
@@ -68,7 +95,7 @@ const Chat = (
   return (
     <div
       className={cn(
-        "grid h-[100vh] grid-rows-[50px,auto,70px] bg-back-three transition-all duration-300 overflow-hidden",
+        "grid h-[100vh] grid-rows-[50px,auto,90px] bg-back-three transition-all duration-300 overflow-hidden",
         showMembersList ? "grid-cols-[1fr,270px]" : "grid-cols-[1fr,0px]"
       )}
       style={{ gridTemplateAreas: "'header header' 'main aside' 'footer footer'" }}
@@ -85,7 +112,7 @@ const Chat = (
         )}
         style={{ gridArea: "aside" }}
       >
-        <MembersList membersList={conversation.users} />
+        <MembersList conversationId={conversationId}  membersList={conversation.users} />
       </aside>
       <div
         className="overflow-y-auto flex flex-col"
@@ -94,44 +121,17 @@ const Chat = (
       >
         <div className="w-full flex-1 min-h-[50px]"></div>
         {
-          chat.map((msg, index) => {
+          chat.map((msg: MessageWithSender, index) => {
             return (
               <Message key={index} message={msg} />
             )
           })
         }
       </div>
-      <footer
-        style={{ gridArea: "footer" }}
-      >
-        <form
-          className="p-4 flex gap-2"
-          action={(data) => {
-            const msg = data.get("msg") as string
-            if (msg) {
-              const send = {
-                msg: msg,
-                user: user,
-                conversationId,
-                prevSender: chat.length !== 0 ? chat.slice(-1)[0].senderId : null,
-                prevCreatedAt: chat.length !== 0 ? chat.slice(-1)[0].createdAt : null
-              } as ChatMsg
-              socket.emit("message", send)
-            }
-          }}>
-          <input
-            className="flex-1 p-2 px-3 rounded-md outline-none border-none"
-            placeholder="Type a message"
-            type="text"
-            name="msg"
-            autoComplete="off"
-            autoFocus
-          />
-          <button type="submit">Send</button>
-        </form>
-      </footer>
+      <SendMessageInput user={user} conversationId={conversationId} socket={socket} handleMessageSend={handleMessageSend} />
     </div>
   )
 }
+
 
 export default Chat

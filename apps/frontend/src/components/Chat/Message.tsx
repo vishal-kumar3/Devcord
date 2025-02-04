@@ -4,11 +4,15 @@ import { formatDate, formatTime } from "@/utils/date_time"
 import Image from "next/image"
 
 
-const Message = ({ message }: { message: MessageWithSender }) => {
-  const combined_msg = message.prevSender == message.senderId
-  const duration_diff = (message.createdAt.getTime() - (message.prevCreatedAt?.getTime() ?? 0)) / (1000 * 60)
+// WIP: ensure that kafka is sending data correctly since createAt is not recognised as Date else as string which is major bug
 
-  const combine = combined_msg && duration_diff < 10
+const Message = ({ message }: { message: MessageWithSender }) => {
+  const createdAtDate = new Date(message.createdAt);
+  const prevCreatedAtDate = message.prevCreatedAt ? new Date(message.prevCreatedAt) : null;
+
+  const duration_diff = (createdAtDate.getTime() - (prevCreatedAtDate?.getTime() ?? 0)) / (1000 * 60);
+
+  const combine = (message.prevSender == message.senderId) && duration_diff < 10;
 
   return (
     <div className={cn(

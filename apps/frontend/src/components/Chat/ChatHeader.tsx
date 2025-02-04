@@ -1,9 +1,12 @@
 import Image from "next/image"
-import { Dispatch, SetStateAction, useState } from "react"
+import { Dispatch, SetStateAction, useEffect, useState } from "react"
 import { ConversationWithMembers } from "../../types/conversation.type"
 import { User } from "@prisma/client"
 import { ChangeConversationName } from "../../actions/conversation.action"
 import { cn } from "@/lib/utils"
+import { getSocket } from "@/lib/socket.config"
+import { SOCKET_EVENTS, TitleChangeData } from "@devcord/node-prisma/dist/constants/socket.const"
+import { toast } from "sonner"
 
 // WIP: Members icon will not appear in personal chat
 // WIP: Send grp message declaring the grp name changed + by whom
@@ -18,8 +21,30 @@ const ChatHeader = (
     loggedUser: User
   }) => {
 
-  const name = conversationDetails.name?.replace(loggedUser.username as string, "") as string
+  let name = conversationDetails.name?.replace(loggedUser.username as string, "") as string
   const [inputValue, setInputValue] = useState(name);
+
+  const socket = getSocket()
+
+  useEffect(() => {
+    socket.connect()
+    socket.auth = {
+      room: conversationDetails.id
+    }
+
+    const handleTitleChange = (data: TitleChangeData) => {
+      console.log("Yahooo! no not good!")
+      setInputValue(data.title)
+    }
+
+    socket.on(SOCKET_EVENTS.TITLE_CHANGE, handleTitleChange)
+
+    return () => {
+      socket.off(SOCKET_EVENTS.TITLE_CHANGE, handleTitleChange)
+      socket.disconnect()
+    }
+  }, [socket, conversationDetails.id])
+
 
 
   return (
@@ -30,19 +55,25 @@ const ChatHeader = (
         <input
           type="text"
           className={cn(
-            "border border-transparent focus:border-black bg-transparent outline-none min-w-[2ch] px-1 py-0.5 overflow-hidden whitespace-nowrap resize-none",
+            "border border-transparent focus:border-black bg-transparent outline-none min-w-[2ch] py-0.5 overflow-hidden whitespace-nowrap resize-none",
           )}
-          style={{width: `${inputValue.length-1}ch`}}
+          style={{width: `${inputValue.length}ch`}}
           value={inputValue}
+          disabled={conversationDetails.isPersonal}
           onChange={(e) => setInputValue(e.target.value)}
           onBlur={async (e) => {
-            console.log("wah")
             if (e.target.value === name) return
             const conversation = await ChangeConversationName(conversationDetails.id, e.target.value as string)
+            if (conversation) {
+              name = e.target.value
+              socket.emit(SOCKET_EVENTS.TITLE_CHANGE, {
+                conversationId: conversation.id,
+                title: conversation.name
+              } as TitleChangeData)
+            }
             if (!conversation) {
               e.target.value = name
             }
-            console.log("conversation", conversation)
           }}
         />
       </div>

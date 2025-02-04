@@ -108,45 +108,81 @@ export const AddMembersToConversation = async (
     :
     { conversationId: string, users: selectedUserType[] }
 ) => {
-  console.log("Adding members")
-  if (!conversationId || users.length == 0) return null
 
-  const conversation = await prisma.conversation.findUnique({
+  if (!conversationId || users.length == 0) return null
+  const loggedInUser = await getLoggedInUser()
+  if (!loggedInUser) return null
+
+  // WIP: Check for authority if they can add members or not
+  const conversation = await prisma.conversation.update({
     where: {
       id: conversationId
+    },
+    data: {
+      users: {
+        createMany: {
+          data: users.map((user) => {
+            return { userId: user.id }
+          })
+        }
+      },
+      isPersonal: users.length <= 2
+    },
+    include: {
+      users: true
     }
   }).catch(err => {
     console.error("Error while fetching conversation", err.stack)
     return null
   })
-  console.log("conversation:- ", conversation)
 
   if (!conversation) return null
+
+  const addedUser = await prisma.userConversation.findMany({
+    where: {
+      conversationId: conversationId,
+      userId: {
+        in: users.map((user) => user.id)
+      }
+    },
+    include: {
+      user: true
+    }
+  })
+
+  return addedUser
+}
+
+export const removeMemberFromConversation = async (
+  { conversationId, userId }
+    :
+    { conversationId: string, userId: string }
+) => {
+  if (!conversationId || !userId) return null
 
   const loggedInUser = await getLoggedInUser()
   if (!loggedInUser) return null
 
-  const convUser = users.map((user) => {
-    return { userId: user.id }
-  })
-
-  // WIP: Check for authority if they can add members or not
-
-  const addedUsers = await prisma.userConversation.createMany({
-    data: convUser.map((user) => {
-      return {
-        userId: user.userId,
-        conversationId
+  const conversation = await prisma.conversation.update({
+    where: {
+      id: conversationId
+    },
+    data: {
+      users: {
+        deleteMany: {
+          userId
+        }
       }
-    })
+    },
+    include: {
+      users: true
+    }
   }).catch(err => {
-    console.error("Error while adding members to conversation", err.stack)
+    console.error("Error while removing member from conversation", err.stack)
     return null
   })
 
-  console.log("newUsers", addedUsers)
-
-  return addedUsers
+  return conversation?.users
 }
 
 export const getConversationAndUserById = async (conversationId: string) => {
@@ -178,7 +214,6 @@ export const getConversationByUserIdsInDM = async (userIds: string[]) => {
 
   userIds.push(session.user.id)
 
-  console.log("userIds", userIds)
   const conversations = await prisma.conversation.findMany({
     where: {
       isDM: true,
@@ -205,8 +240,6 @@ export const getConversationByUserIdsInDM = async (userIds: string[]) => {
     console.error("Error while fetching conversation by user ids", err.stack);
     return null;
   });
-
-  console.log("conversations", conversations)
 
   return conversations
 }

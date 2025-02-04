@@ -1,6 +1,6 @@
 
-export function formatTime(date: Date): string {
-  if (!(date instanceof Date)) return date as string;
+export function formatTime(dateInput: string | number | Date): string {
+  const date = new Date(dateInput);
 
   let hours = date.getHours();
   let minutes: number | string = date.getMinutes();
@@ -16,8 +16,9 @@ export function formatTime(date: Date): string {
 }
 
 
-export function formatDate(date: Date): string {
-  if (!(date instanceof Date)) return date as string;
+export function formatDate(dateInput: string | number | Date): string {
+  const date = new Date(dateInput);
+
 
   const now = new Date();
   const diffTime = now.getTime() - date.getTime();

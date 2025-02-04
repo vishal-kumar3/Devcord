@@ -16,7 +16,7 @@
     ],
     "paths": {
       "@devcord/node-prisma": [
-        "../../packages/node-prisma/dist"
+        "../../packages/node-prisma/dist",
       ]
     }
   },

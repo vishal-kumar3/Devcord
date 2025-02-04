@@ -1,13 +1,12 @@
 "use client"
 import { useSearchParams } from "next/navigation";
-import { AuthResponseMsg } from "@/types/auth.type";
 import { CiWarning } from "react-icons/ci";
 
 
 const ErrorCard = () => {
   const query = useSearchParams()
   const error = query.get("error")
-  
+
   return (
     <>
       {error && (

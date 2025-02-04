@@ -3,33 +3,69 @@ import { UserConversationWithUser } from "../../types/userConversation.type"
 import Image from "next/image"
 import { selectedUserType } from "../HomePage/CreatePersonalConversation"
 import { AddMembers } from "../HomePage/AddMembers"
+import { useEffect, useState } from "react"
+import { getSocket } from "@/lib/socket.config"
+import { AddMembersData, RemoveMembersData, SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const"
+import { removeMemberFromConversation } from "@/actions/conversation.action"
+import { Socket } from "socket.io-client"
+import { toast } from "sonner"
 
 // WIP: socket for online offline, also ui
 // WIP: Add user to conversation
 // use revalide to membersList action and also optimistic update
 
-export function MembersList({ membersList }: { membersList: UserConversationWithUser[] }) {
+export function MembersList(
+  { membersList, conversationId }
+    :
+    {
+      membersList: UserConversationWithUser[],
+      conversationId: string
+    }
+) {
+  const [members, setMembers] = useState<UserConversationWithUser[]>(membersList)
 
-  const restrictedUser: selectedUserType[] = []
+  const socket = getSocket()
 
-  membersList.map((member) => {
-    restrictedUser.push({
-      id: member.userId,
-      username: member.user.username as string
-    })
-  })
+  useEffect(() => {
+    socket.connect()
+    socket.auth = {
+      room: conversationId
+    }
+
+    const handleAddMembers = (data: AddMembersData) => {
+      console.log("Add members:- ", data)
+      const { members } = data
+      setMembers((prevMembers) => [...prevMembers, ...members])
+    }
+
+    const handleRemoveMembers = (data: RemoveMembersData) => {
+      console.log("Remove members:- ", data)
+      const { members } = data
+      setMembers((prevMembers) =>
+        prevMembers.filter((user) => !members.includes(user.userId)) )
+    }
+
+    socket.on(SOCKET_EVENTS.REMOVE_MEMBERS, handleRemoveMembers)
+
+    socket.on(SOCKET_EVENTS.ADD_MEMBERS, handleAddMembers)
+    return () => {
+      socket.off(SOCKET_EVENTS.ADD_MEMBERS, handleAddMembers)
+      socket.off(SOCKET_EVENTS.REMOVE_MEMBERS, handleRemoveMembers)
+      socket.disconnect()
+    }
+  }, [socket, conversationId])
 
   return (
     <div className="p-4">
       <div className="flex justify-between items-center">
-        <p className="font-semibold">Members - { membersList.length }</p>
-        <AddMembers restrictedUser={restrictedUser} conversationId={membersList[0].conversationId} />
+        <p className="font-semibold">Members - { members.length }</p>
+        <AddMembers restrictedUser={members} conversationId={conversationId} />
       </div>
       <div className="overflow-y-auto h-full space-y-1">
         {
-          membersList.map((member) => {
+          members.map((member) => {
             return (
-              <Member key={member.userId} user={member.user} />
+              <Member socket={socket} key={member.userId} conversationId={conversationId} user={member.user} />
             )
           })
         }
@@ -39,7 +75,7 @@ export function MembersList({ membersList }: { membersList: UserConversationWith
 }
 
 
-const Member = ({user}: {user: User}) => {
+const Member = ({ user, conversationId, socket }: { user: User, conversationId: string, socket: Socket}) => {
   return (
     <div className="flex gap-2 items-center hover:bg-back-three cursor-pointer p-1">
       <div className="size-[40px rounded-full">
@@ -54,6 +90,23 @@ const Member = ({user}: {user: User}) => {
       <p>
         {user.username}
       </p>
+      <button onClick={async () => {
+        const remainingUsers = await removeMemberFromConversation({
+          conversationId,
+          userId: user.id
+        })
+        if (!remainingUsers) {
+          toast.error("Error while removing user")
+        }
+
+        if (remainingUsers) {
+          socket.emit(SOCKET_EVENTS.REMOVE_MEMBERS, {
+            conversationId,
+            members: [user.id]
+          })
+        }
+        console.log("User removed", remainingUsers)
+      }}>x</button>
     </div>
   )
 }

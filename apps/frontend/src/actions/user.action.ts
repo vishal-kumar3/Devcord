@@ -36,7 +36,7 @@ export const getLoggedInUser = cache(async () => {
 
   return user
 })
-export const searchByUsernameForConversation = async ({username, restrictedUser = [], page = 0}: {username: string, page: number, restrictedUser?: selectedUserType[]}) => {
+export const searchByUsernameForConversation = async ({username, restrictedUser = [], page = 0}: {username: string, page: number, restrictedUser: string[]}) => {
 
   if (!username || username.trim() === "") return null;
 
@@ -50,7 +50,7 @@ export const searchByUsernameForConversation = async ({username, restrictedUser 
       },
       NOT: {
         id: {
-          in: [session?.user?.id, ...restrictedUser.map((user) => user.id)]
+          in: [session?.user?.id, ...restrictedUser]
         },
       },
     },

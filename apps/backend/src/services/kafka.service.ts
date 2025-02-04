@@ -1,7 +1,8 @@
 import { prisma } from "@devcord/node-prisma/dist/index.js";
-import { createConsumer, createProducer, kafka } from "../config/kafka.config.js"
+import { createConsumer, createProducer } from "../config/kafka.config.js"
 import { CustomSocket } from "../socket.js";
 import { User } from "@prisma/client";
+import { SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const.js";
 
 export type ChatMsg = {
   msg: string
@@ -55,9 +56,10 @@ export const consumeMessage = async (topic: string, roomId: string, socket: Cust
             sender: true
           }
         })
+        console.log('Message:', db_message);
 
         if (db_message) {
-          socket.to(roomId).emit("message", db_message);
+          socket.to(roomId).emit(SOCKET_EVENTS.MESSAGE, db_message);
         }
 
       } catch (error) {

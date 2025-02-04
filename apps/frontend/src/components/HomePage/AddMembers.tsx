@@ -18,6 +18,9 @@ import { AddMembersToConversation, createConversation, getConversationByUserIdsI
 import { toast } from "sonner"
 import { Check } from "lucide-react"
 import Link from "next/link"
+import { getSocket } from "@/lib/socket.config"
+import { AddMembersData, SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const"
+import { UserConversationWithUser } from "@/types/userConversation.type"
 
 export type selectedUserType = {
   id: string
@@ -25,7 +28,7 @@ export type selectedUserType = {
 }
 
 type CreatePersonalConversationProps = {
-  restrictedUser: selectedUserType[]
+  restrictedUser: UserConversationWithUser[]
   conversationId: string
 }
 
@@ -39,7 +42,7 @@ export function AddMembers({ restrictedUser, conversationId }: CreatePersonalCon
 
   useEffect(() => {
     async function searchUser() {
-      const users = await searchByUsernameForConversation({ username: searchUsername, page: 0, restrictedUser: restrictedUser })
+      const users = await searchByUsernameForConversation({ username: searchUsername, page: 0, restrictedUser: restrictedUser.map(user => user.user.id) })
       setUsers(users || [])
     }
 
@@ -145,10 +148,10 @@ export function AddMembers({ restrictedUser, conversationId }: CreatePersonalCon
 export const AddMembersButton = (
   { selectedUser, buttonTitle, restrictedUser = [], conversationId }
     :
-    { selectedUser: selectedUserType[], buttonTitle: string, restrictedUser?: selectedUserType[], conversationId: string }
+    { selectedUser: selectedUserType[], buttonTitle: string, restrictedUser: UserConversationWithUser[], conversationId: string }
 ) => {
 
-  const addMemberHandler = async ({ user, restrictedUser }: { user: selectedUserType[], restrictedUser: selectedUserType[] }) => {
+  const addMemberHandler = async ({ user, restrictedUser }: { user: selectedUserType[], restrictedUser: UserConversationWithUser[] }) => {
     if (!restrictedUser || !conversationId) return
 
     if (user.length + restrictedUser.length === 0) {
@@ -159,14 +162,23 @@ export const AddMembersButton = (
       return toast.error("You can't add more than 10 users")
     }
 
-    const updatedConversation = await AddMembersToConversation({ conversationId, users: user.map((u) => { return { id: u.id, username: u.username } }) })
+    const addedUsers = await AddMembersToConversation({ conversationId, users: user.map((u) => { return { id: u.id, username: u.username } }) })
 
-    if (!updatedConversation) {
+    if (!addedUsers) {
       return toast.error("Error while adding members")
     }
-    console.log("updatedConversation:- ", updatedConversation)
-    toast.success("Members added successfully")
-    return updatedConversation
+
+    const socket = getSocket()
+    socket.auth = {
+      room: conversationId
+    }
+
+    socket.emit(SOCKET_EVENTS.ADD_MEMBERS, {
+      conversationId,
+      members: addedUsers
+    } as AddMembersData)
+
+    return toast.success("Members added successfully")
   }
 
   return (
@@ -210,10 +222,8 @@ export const ExistingConversationButton = ({ selectedUser }: { selectedUser: sel
     getExistingConversation()
   }, [selectedUser])
 
-  console.log("existingConversation")
-
   return (
-    <div className="p-1 flex flex-row flex-wrap gap-1">
+    <div key={"existing conversations"} className="p-1 flex flex-row flex-wrap gap-1">
       {
         existingConversation.map((conversation) => {
           return (
