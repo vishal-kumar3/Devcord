@@ -56,7 +56,6 @@ export const consumeMessage = async (topic: string, roomId: string, socket: Cust
             sender: true
           }
         })
-        console.log('Message:', db_message);
 
         if (db_message) {
           socket.to(roomId).emit(SOCKET_EVENTS.MESSAGE, db_message);

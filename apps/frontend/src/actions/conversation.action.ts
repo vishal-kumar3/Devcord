@@ -3,10 +3,10 @@
 import { prisma } from '@devcord/node-prisma';
 import { getLoggedInUser } from "./user.action"
 import { selectedUserType } from '@/components/HomePage/CreatePersonalConversation';
-import { auth } from '@/auth';
+import { getAuthUser } from './auth.action';
 
 
-export const createConversation = async ({ user }: { user: selectedUserType[] }) => {
+export const createDmConversation = async ({ user }: { user: selectedUserType[] }) => {
 
   if (user.length == 0 || user.length > 10) return null
 
@@ -30,11 +30,16 @@ export const createConversation = async ({ user }: { user: selectedUserType[] })
 
   const conversation = await prisma.conversation.create({
     data: {
-      isPersonal,
       name: name,
+      type: isPersonal ? 'DM' : 'GROUP_DM',
       users: {
         createMany: {
           data: convUser
+        }
+      },
+      admins: {
+        connect: {
+          id: loggedInUser.id
         }
       }
     }
@@ -104,9 +109,9 @@ export const ChangeConversationName = async (conversationId: string, name: strin
 }
 
 export const AddMembersToConversation = async (
-  { conversationId, users }
+  { conversationId, users, totalMembers }
     :
-    { conversationId: string, users: selectedUserType[] }
+    { conversationId: string, users: selectedUserType[], totalMembers: number }
 ) => {
 
   if (!conversationId || users.length == 0) return null
@@ -126,7 +131,7 @@ export const AddMembersToConversation = async (
           })
         }
       },
-      isPersonal: users.length <= 2
+      isPersonal: totalMembers <= 2
     },
     include: {
       users: true
@@ -209,7 +214,7 @@ export const getConversationAndUserById = async (conversationId: string) => {
 
 export const getConversationByUserIdsInDM = async (userIds: string[]) => {
   if (!userIds) return null
-  const session = await auth()
+  const session = await getAuthUser()
   if (!session) return null
 
   userIds.push(session.user.id)

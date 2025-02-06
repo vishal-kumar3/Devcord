@@ -62,7 +62,7 @@ body {
 
   --nav: 50px
   --sidebar: 270px
-  
+
 }
 
 .nav {
@@ -71,6 +71,10 @@ body {
 
 .sidebar {
   width: "270px"
+}
+
+.flexibleInput {
+  field-sizing: content
 }
 
 @layer base {

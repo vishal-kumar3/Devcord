@@ -75,7 +75,7 @@ const ProjectLink = ({ project }: { project: ProjectLinkProps }) => {
             </Link>
           </div>
         </TooltipTrigger>
-        <TooltipContent side="right" >
+        <TooltipContent side="right">
           <p className="text-base">{project.name}</p>
         </TooltipContent>
       </Tooltip>

@@ -5,6 +5,7 @@ import { ConversationWithMembers } from "@/types/conversation.type";
 import { getMessageByConversationId, getNextCombinedMessage } from "@/actions/message.action";
 import { MessageWithSender } from "@/types/message.types";
 import Chat from "@/components/Chat/Chat";
+import DummyChat from "@/components/Chat/DummyChat";
 
 export default async function Page({
   params
@@ -27,6 +28,7 @@ export default async function Page({
   return (
     <div className="w-full">
       <Chat chat_message={chat_messages || []} conversationId={conversationId} conversation={conversation} user={loggedUser} />
+      {/* <DummyChat chat_message={chat_messages || []} conversationId={conversationId} conversation={conversation} user={loggedUser} /> */}
     </div>
   );
 }

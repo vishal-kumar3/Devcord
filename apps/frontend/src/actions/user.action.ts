@@ -1,8 +1,7 @@
 "use server"
-import { auth } from '@/auth';
-import { selectedUserType } from '@/components/HomePage/CreatePersonalConversation';
 import { prisma } from '@devcord/node-prisma';
 import { cache } from "react";
+import { getAuthUser } from './auth.action';
 
 export const getUserFromGithubId = async (githubId: string) => {
   if (!githubId) return null;
@@ -21,7 +20,7 @@ export const getUserFromGithubId = async (githubId: string) => {
 }
 
 export const getLoggedInUser = cache(async () => {
-  const session = await auth()
+  const session = await getAuthUser()
 
   if(!session) return null
 
@@ -36,11 +35,12 @@ export const getLoggedInUser = cache(async () => {
 
   return user
 })
-export const searchByUsernameForConversation = async ({username, restrictedUser = [], page = 0}: {username: string, page: number, restrictedUser: string[]}) => {
+
+export const searchByUsernameForConversation = async ({ username, restrictedUser = [], page = 0 }: { username: string, page: number, restrictedUser?: string[] }) => {
 
   if (!username || username.trim() === "") return null;
 
-  const session = await auth();
+  const session = await getAuthUser();
   if (!session) return null;
 
   const users = await prisma.user.findMany({

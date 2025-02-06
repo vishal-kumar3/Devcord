@@ -4,7 +4,7 @@ import Image from "next/image"
 import { selectedUserType } from "../HomePage/CreatePersonalConversation"
 import { AddMembers } from "../HomePage/AddMembers"
 import { useEffect, useState } from "react"
-import { getSocket } from "@/lib/socket.config"
+import { getSocket, setSocketMetadata } from "@/lib/socket.config"
 import { AddMembersData, RemoveMembersData, SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const"
 import { removeMemberFromConversation } from "@/actions/conversation.action"
 import { Socket } from "socket.io-client"
@@ -28,26 +28,22 @@ export function MembersList(
 
   useEffect(() => {
     socket.connect()
-    socket.auth = {
-      room: conversationId
-    }
+    setSocketMetadata(socket, { room: conversationId })
 
     const handleAddMembers = (data: AddMembersData) => {
-      console.log("Add members:- ", data)
       const { members } = data
       setMembers((prevMembers) => [...prevMembers, ...members])
     }
 
     const handleRemoveMembers = (data: RemoveMembersData) => {
-      console.log("Remove members:- ", data)
       const { members } = data
       setMembers((prevMembers) =>
         prevMembers.filter((user) => !members.includes(user.userId)) )
     }
 
     socket.on(SOCKET_EVENTS.REMOVE_MEMBERS, handleRemoveMembers)
-
     socket.on(SOCKET_EVENTS.ADD_MEMBERS, handleAddMembers)
+    
     return () => {
       socket.off(SOCKET_EVENTS.ADD_MEMBERS, handleAddMembers)
       socket.off(SOCKET_EVENTS.REMOVE_MEMBERS, handleRemoveMembers)
@@ -105,7 +101,6 @@ const Member = ({ user, conversationId, socket }: { user: User, conversationId: 
             members: [user.id]
           })
         }
-        console.log("User removed", remainingUsers)
       }}>x</button>
     </div>
   )

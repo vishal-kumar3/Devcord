@@ -14,26 +14,27 @@ datasource db {
 }
 
 model User {
-  id              String     @id @default(cuid())
+  id String @id @default(cuid())
 
-  githubId        String?    @unique
-  username        String?    @unique
+  githubId String? @unique
+  username String? @unique
 
-  email           String     @unique
-  emailVerified   DateTime?
-  name            String?
-  github_token    String?
-  image           String?
-  banner          String?
-  bio             String?
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  github_token  String?
+  image         String?
+  banner        String?
+  bio           String?
 
-  role            Role      @default(USER)
+  role UserRole @default(USER)
 
-  accounts        Account[]
-  projects        Project[]
-  conversations   UserConversation[]
-  messages        Message[]
-  reactions       Reaction[]
+  dmAdmin       Conversation[]
+  accounts      Account[]
+  projects      Project[]
+  conversations UserConversation[]
+  messages      Message[]
+  reactions     Reaction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -62,21 +63,24 @@ model Account {
   @@id([provider, providerAccountId])
 }
 
-enum Role {
+enum UserRole {
   USER
   ADMIN
 }
 
-
 // WIP: isPublic and if yes then user will require to ask for access to join project
 model Project {
-  id          String     @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
   description String?
   icon        String?
   banner      String?
-  repo        String  @unique
+  repo        String? @unique
 
+  categories Category[]
+
+  channels Channel[] // channels that are not in any category
+  roles    Role[]
 
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id])
@@ -85,55 +89,148 @@ model Project {
   updatedAt DateTime @updatedAt
 }
 
-model Conversation {
-  id              String          @id @default(cuid())
-  name            String?
-  isPersonal      Boolean         @default(false)
-  isDM            Boolean         @default(false)
+model Category {
+  id    String @id @default(cuid())
+  name  String
+  order Int?
 
-  messages        Message[]
-  users           UserConversation[]
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
 
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  channels Channel[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model UserConversation {
-  userId          String
-  conversationId  String
-  joinedAt        DateTime        @default(now())
+model Channel {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  channelType ChannelType
 
-  user            User            @relation(fields: [userId], references: [id])
-  conversation    Conversation    @relation(fields: [conversationId], references: [id])
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId String?
+
+  conversations Conversation?
+
+  allowedRoles Role[]
+
+  forumLayout ForumLayout?
+
+  order Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Role {
+  id    String  @id @default(cuid())
+  name  String
+  color String?
+
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+
+  allowedChannels Channel[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ForumLayout {
+  DEFAULT
+  COMPACT
+  GRID
+}
+
+enum ChannelType {
+  RULES
+  TEXT
+  TEXT_LIMITED
+  TEXT_ACTIVE_THREAD
+  TEXT_THREAD_PRIVATE
+  VOICE
+  VOICE_LIMITED
+  ANNOUNCEMENT
+  ANNOUNCEMENT_LIMITED
+  STAGE
+  FORUM
+  FORUM_LIMITED
+  VIDEO
+}
+
+model Conversation {
+  id         String           @id @default(cuid())
+  name       String?
+  type       ConversationType
+  nameEdited DateTime?
+
+  admins User[] // only for DM and GROUP_DM
+  users  UserConversation[] // only for DM and GROUP_DM
+
+  messages  Message[]
+  threads   Message[] @relation("ThreadConversation")
+  channel   Channel?  @relation(fields: [channelId], references: [id])
+  channelId String?   @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ConversationType {
+  DM
+  GROUP_DM
+  CHANNEL
+}
+
+
+// Consider if you want to track any role/permission or status per conversation (for example, muted status, custom nicknames, etc.). That can be added to this join model later if needed.
+model UserConversation {
+  userId         String
+  conversationId String
+  joinedAt       DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@id([userId, conversationId])
-  @@unique([userId, conversationId])
 }
 
 // WIP: create schema for invite token
 
 model Message {
-  id              String             @id @default(cuid())
-  content         String?
-  senderId        String?
-  conversationId  String
+  id             String  @id @default(cuid())
+  content        String?
+  senderId       String?
+  conversationId String
 
-  prevSender      String? // to combine msg from same sender
-  prevCreatedAt   DateTime? // to combine msg from same sender
+  replyToId            String?
+  threadConversationId String?
 
-  fileUrl         String?
-  duration        Int?
-  systemData      String?
+  prevSender    String? // to combine msg from same sender
+  prevCreatedAt DateTime? // to combine msg from same sender
 
-  type            MessageType
-  sender          User?            @relation(fields: [senderId], references: [id])
-  conversation    Conversation    @relation(fields: [conversationId], references: [id])
-  reactions       Reaction[]
+  fileUrl    String?
+  duration   Int?
+  systemData String?
 
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  type               MessageType
+  sender             User?         @relation(fields: [senderId], references: [id])
+  conversation       Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  reactions          Reaction[]
+  replyTo            Message?      @relation("ReplyTo", fields: [replyToId], references: [id])
+  replies            Message[]     @relation("ReplyTo")
+  threadConversation Conversation? @relation("ThreadConversation", fields: [threadConversationId], references: [id])
 
-  @@index([conversationId, createdAt, prevSender])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  editedAt  DateTime?
+
+  @@index([conversationId, prevSender])
 }
 
 enum MessageType {
@@ -145,13 +242,12 @@ enum MessageType {
   SYSTEM
 }
 
-
 model Reaction {
   id        Int      @id @default(autoincrement())
   emoji     String
   messageId String
-  message   Message @relation(fields: [messageId], references: [id])
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
   userId    String
-  user      User    @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 }

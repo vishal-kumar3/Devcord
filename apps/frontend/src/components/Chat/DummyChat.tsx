@@ -25,7 +25,7 @@ export type TypingEvent = {
   typing: boolean
 }
 
-const Chat = (
+const DummyChat = (
   {
     conversationId,
     conversation,
@@ -87,43 +87,48 @@ const Chat = (
   return (
     <div
       className={cn(
-        "grid h-[100vh] grid-rows-[50px,1fr,auto] bg-back-three transition-all duration-300 overflow-hidden",
-        showMembersList ? "grid-cols-[1fr,270px]" : "grid-cols-[1fr,0px]"
+        "flex h-[100vh] flex-col bg-back-three transition-all duration-300 overflow-hidden",
+        showMembersList ? "open-sidebar" : "close-sidebar"
       )}
       style={{ gridTemplateAreas: "'header header' 'main aside' 'footer footer'" }}
     >
       <header
+        className="h-[50px]"
         style={{ gridArea: "header" }}
       >
         <ChatHeader loggedUser={user} conversationDetails={conversation} setShowMembersList={setShowMembersList} />
       </header>
-      <aside
-        className={cn(
-          "bg-back-two transition-all duration-300",
-          showMembersList ? "translate-x-0 visible" : "translate-x-full collapse"
-        )}
-        style={{ gridArea: "aside" }}
-      >
-        <MembersList conversationId={conversationId}  membersList={conversation.users} />
-      </aside>
-      <main
-        className="overflow-y-auto flex flex-col"
-        style={{ gridArea: "main" }}
-        ref={chatContainerRef}
-      >
-        <div className="w-full flex-1 min-h-[50px]"></div>
-        {
-          chat.map((msg: MessageWithSender, index) => {
-            return (
-              <Message key={index} message={msg} />
-            )
-          })
-        }
-      </main>
-      <SendMessageInput user={user} conversationId={conversationId} socket={socket} handleMessageSend={handleMessageSend} />
+      <div className="">
+        <main
+          className="overflow-y-auto flex flex-col"
+          style={{ gridArea: "main" }}
+          ref={chatContainerRef}
+        >
+          <div className="w-full flex-1 min-h-[50px]"></div>
+          {
+            chat.map((msg: MessageWithSender, index) => {
+              return (
+                <Message key={index} message={msg} />
+              )
+            })
+          }
+        </main>
+        <aside
+          className={cn(
+            "bg-back-two transition-all duration-300",
+            showMembersList ? "translate-x-0 visible" : "translate-x-full collapse"
+          )}
+          style={{ gridArea: "aside" }}
+        >
+          <MembersList conversationId={conversationId} membersList={conversation.users} />
+        </aside>
+      </div>
+      <div className="h-[90px]">
+        <SendMessageInput user={user} conversationId={conversationId} socket={socket} handleMessageSend={handleMessageSend} />
+      </div>
     </div>
   )
 }
 
 
-export default Chat
+export default DummyChat

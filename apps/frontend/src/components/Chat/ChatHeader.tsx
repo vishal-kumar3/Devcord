@@ -4,9 +4,8 @@ import { ConversationWithMembers } from "../../types/conversation.type"
 import { User } from "@prisma/client"
 import { ChangeConversationName } from "../../actions/conversation.action"
 import { cn } from "@/lib/utils"
-import { getSocket } from "@/lib/socket.config"
+import { getSocket, setSocketMetadata } from "@/lib/socket.config"
 import { SOCKET_EVENTS, TitleChangeData } from "@devcord/node-prisma/dist/constants/socket.const"
-import { toast } from "sonner"
 
 // WIP: Members icon will not appear in personal chat
 // WIP: Send grp message declaring the grp name changed + by whom
@@ -28,12 +27,10 @@ const ChatHeader = (
 
   useEffect(() => {
     socket.connect()
-    socket.auth = {
-      room: conversationDetails.id
-    }
+    setSocketMetadata(socket, { room: conversationDetails.id })
 
     const handleTitleChange = (data: TitleChangeData) => {
-      console.log("Yahooo! no not good!")
+      if (data.conversationId !== conversationDetails.id) return
       setInputValue(data.title)
     }
 
@@ -55,9 +52,8 @@ const ChatHeader = (
         <input
           type="text"
           className={cn(
-            "border border-transparent focus:border-black bg-transparent outline-none min-w-[2ch] py-0.5 overflow-hidden whitespace-nowrap resize-none",
+            "border border-transparent focus:border-black bg-transparent outline-none flexibleInput min-w-[2ch] py-0.5 overflow-hidden whitespace-nowrap resize-none",
           )}
-          style={{width: `${inputValue.length}ch`}}
           value={inputValue}
           disabled={conversationDetails.isPersonal}
           onChange={(e) => setInputValue(e.target.value)}

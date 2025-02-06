@@ -1,29 +1,34 @@
 import { User } from "@prisma/client"
-import { useEffect, useRef, useState } from "react"
+import { ChangeEvent, Dispatch, SetStateAction, useEffect, useRef, useState } from "react"
 import { Socket } from "socket.io-client"
 import { TypingEvent } from "./Chat"
 import { SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
+import { setSocketMetadata } from "@/lib/socket.config"
 
 export const SendMessageInput = (
   { user, conversationId, socket, handleMessageSend }
     :
-    { user: User, conversationId: string, socket: Socket, handleMessageSend: (data: FormData) => void }
+    {
+      user: User,
+      conversationId: string,
+      socket: Socket,
+      handleMessageSend: (data: FormData) => void,
+    }
 ) => {
 
+  const [message, setMessage] = useState<string>("")
   const [typingUsers, setTypingUsers] = useState<User[]>([])
   const incomingTypingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const localTypingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => {
-    socket.auth = {
-      room: conversationId
-    }
-
+    setSocketMetadata(socket, { room: conversationId })
 
     const handleTyping = (data: TypingEvent) => {
-      if (!data) return;
+      if (!data || data.conversationId != conversationId) return;
 
       setTypingUsers((prevUsers) => {
         const filteredUsers = prevUsers.filter(u => u.id !== data.user.id);
@@ -42,7 +47,6 @@ export const SendMessageInput = (
       incomingTypingTimeoutRef.current = setTimeout(() => {
         setTypingUsers((prevUsers) => prevUsers.filter(u => u.id !== data.user.id));
       }, 2000);
-
     }
 
     socket.on(SOCKET_EVENTS.TYPING, handleTyping)
@@ -52,16 +56,45 @@ export const SendMessageInput = (
     }
   }, [socket, conversationId])
 
+
+  const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value)
+    adjustTextareaHeight()
+
+    socket.emit(SOCKET_EVENTS.TYPING, { user, conversationId, typing: true } as TypingEvent)
+
+    if (localTypingTimeoutRef.current) {
+      clearTimeout(localTypingTimeoutRef.current)
+    }
+
+    localTypingTimeoutRef.current = setTimeout(() => {
+      socket.emit(SOCKET_EVENTS.TYPING, { user, conversationId, typing: false } as TypingEvent)
+    }, 1000)
+  }
+
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "40px"
+      const scrollHeight = textareaRef.current.scrollHeight
+      textareaRef.current.style.height = `${Math.min(Math.max(scrollHeight, 40), 300)}px`
+    }
+  }
+
+
   // WIP: add typing user hover
   // WIP: handle multiple users typing like limit showing users typing
   return (
     <footer
+      className={cn(
+        "h-auto min-h-[50px]",
+      )}
       style={{ gridArea: "footer" }}
     >
       <div className={cn(
-        "flex flex-row items-center gap-2 px-5 h-[20px] w-[calc(100%-270px)]"
+        "flex flex-row items-center gap-2 px-5 h-[20px] transition-all duration-300 w-[calc(100%-270px)]",
+        // typingUsers.length > 0 ? "h-[20px] opacity-100" : "h-0 opacity-0"
       )}>
-        {typingUsers.length > 0 && <div className="text-base size-[8px] rounded-full animate-pulse bg-text-highlighted"></div>}
+        {typingUsers.length > 0 && <div className="text-base size-[8px] rounded-full animate-pulse bg-text-highlighted" />}
         {
           typingUsers.map((user, index) => {
             return (
@@ -77,30 +110,54 @@ export const SendMessageInput = (
           })
         }
       </div>
-      <form
-        className="p-4 flex gap-2 bg-back-two"
-        action={(data) => handleMessageSend(data)}>
-        <input
-          className="flex-1 p-2 px-3 rounded-md outline-none border-none"
-          placeholder="Type a message"
-          type="text"
-          name="msg"
-          autoComplete="off"
-          autoFocus
-          onChange={() => {
-            socket.emit(SOCKET_EVENTS.TYPING, { user, conversationId, typing: true } as TypingEvent)
-
-            if (localTypingTimeoutRef.current) {
-              clearTimeout(localTypingTimeoutRef.current)
-            }
-
-            localTypingTimeoutRef.current = setTimeout(() => {
-              socket.emit(SOCKET_EVENTS.TYPING, { user, conversationId, typing: false } as TypingEvent)
-            }, 1000)
-          }}
-
-        />
-        <button type="submit">Send</button>
+      <form className="px-4 py-1 flex gap-2">
+        <div className="relative flex-1">
+          <textarea
+            ref={textareaRef}
+            className="w-full p-2 px-3 h-[40px] max-h-[300px] overflow-y-scroll resize-none rounded-md outline-none border-none"
+            placeholder="Type a message"
+            name="msg"
+            autoComplete="off"
+            autoFocus
+            value={message}
+            onChange={handleInputChange}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault()
+                if (message.trim()) {
+                  const formData = new FormData()
+                  formData.append("msg", message)
+                  handleMessageSend(formData)
+                  setMessage("")
+                  if(!textareaRef.current) return
+                  textareaRef.current.style.height = "40px"
+                }
+              }
+            }}
+          />
+          <div
+            className="absolute top-0 left-0 right-0 h-2 cursor-row-resize"
+            onMouseDown={(e) => {
+              e.preventDefault()
+              const startY = e.clientY
+              const startHeight = textareaRef?.current?.clientHeight || 0
+              const handleMouseMove = (moveEvent: MouseEvent) => {
+                const deltaY = startY - moveEvent.clientY
+                const newHeight = Math.min(Math.max(startHeight + deltaY, 50), 300)
+                if (textareaRef.current) {
+                  textareaRef.current.style.height = `${newHeight}px`;
+                }
+              }
+              const handleMouseUp = () => {
+                document.removeEventListener("mousemove", handleMouseMove)
+                document.removeEventListener("mouseup", handleMouseUp)
+              }
+              document.addEventListener("mousemove", handleMouseMove)
+              document.addEventListener("mouseup", handleMouseUp)
+            }}
+          />
+        </div>
+        <button type="submit" className="">Send</button>
       </form>
     </footer>
   )

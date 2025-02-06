@@ -1,29 +1,45 @@
 import { Server, Socket } from "socket.io";
 import { consumeMessage, produceMessage } from "./services/kafka.service.js";
 import { setUserStatus } from "./config/redis.config.js";
-import { AddMembersData, MessageData, RemoveMembersData, SOCKET_EVENTS, TitleChangeData, TypingData } from "@devcord/node-prisma/dist/constants/socket.const.js"
+import {
+  AddMembersData,
+  createDmConversationData,
+  MessageData,
+  RemoveMembersData,
+  Rooms,
+  SOCKET_EVENTS,
+  TitleChangeData,
+  TypingData,
+  UserStatusType
+} from "@devcord/node-prisma/dist/constants/socket.const.js"
 
 export interface CustomSocket extends Socket {
   room?: string
+  userId?: string
 }
 
 export const setupSocket = (io: Server) => {
   io.use((socket: CustomSocket, next) => {
     const room = socket.handshake.auth.room || socket.handshake.headers.room;
+    const userId = socket.handshake.auth.userId || socket.handshake.headers.userId || null;
+
     if (!room) {
       return next(new Error("Invalid room"));
     }
     socket.room = room;
+    socket.userId = userId;
     consumeMessage("chat", room, socket);
     return next();
   });
 
   io.on(SOCKET_EVENTS.CONNECTION, (socket: CustomSocket) => {
-    socket.join(socket.room);
     console.log("The socket is connected:- ", socket.id);
+    socket.join(socket.room);
+    socket.join(Rooms.USER_STATUS)
 
     // online offline idle status
-    setUserStatus(socket.id, "idle");
+    // WIP: use socket.userId if not working
+    setUserStatus(socket.userId, UserStatusType.IDLE);
 
 
     socket.on(SOCKET_EVENTS.MESSAGE, (data: MessageData) => {
@@ -35,13 +51,18 @@ export const setupSocket = (io: Server) => {
     })
 
     socket.on(SOCKET_EVENTS.REMOVE_MEMBERS, (data: RemoveMembersData) => {
-      console.log("Remove members:- ", data)
       io.to(socket.room).emit(SOCKET_EVENTS.REMOVE_MEMBERS, data)
     })
 
     socket.on(SOCKET_EVENTS.ADD_MEMBERS, (data: AddMembersData) => {
-      console.log("Add members:- ", data)
       io.to(socket.room).emit(SOCKET_EVENTS.ADD_MEMBERS, data)
+    })
+
+    // WIP: work on createDmConversation real-time
+    socket.on(SOCKET_EVENTS.CREATE_CONVERSATION, (data: createDmConversationData) => {
+      data.userIds.forEach((userId) => {
+        socket.to(userId).emit(SOCKET_EVENTS.CREATE_CONVERSATION, data);
+      })
     })
 
     socket.on(SOCKET_EVENTS.TYPING, (data: TypingData) => {
@@ -49,7 +70,7 @@ export const setupSocket = (io: Server) => {
     })
 
     socket.on(SOCKET_EVENTS.DISCONNECT, () => {
-      setUserStatus(socket.id, "offline");
+      setUserStatus(socket.userId, UserStatusType.OFFLINE);
       console.log("A user disconnected:- ", socket.id);
     });
   });

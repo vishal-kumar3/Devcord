@@ -14,11 +14,15 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react"
 import { User } from "@prisma/client"
 import { searchByUsernameForConversation } from "../../actions/user.action"
 import { debounce } from "../../utils/debounce"
-import { AddMembersToConversation, createConversation, getConversationByUserIdsInDM } from "../../actions/conversation.action"
+import { createDmConversation, getConversationByUserIdsInDM } from "../../actions/conversation.action"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Check } from "lucide-react"
 import Link from "next/link"
+import { getSocket, setSocketMetadata } from "@/lib/socket.config"
+import { auth } from "@/auth"
+import { SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const"
+import { useSession } from "next-auth/react"
 
 export type selectedUserType = {
   id: string
@@ -31,6 +35,7 @@ export function CreatePersonalConversation() {
   const [searchUsername, setSearchUsername] = useState<string>("")
   const [users, setUsers] = useState<User[]>([])
   const [selectedUser, setSelectedUser] = useState<selectedUserType[]>([])
+
 
   useEffect(() => {
     async function searchUser() {
@@ -128,21 +133,28 @@ export const StartChatButton = (
     :
     { selectedUser: selectedUserType[] }
 ) => {
+
+  const session = useSession()
   const router = useRouter()
   const [existingConversation, setExistingConversation] = useState<existingConversationType[]>([])
 
-  const createConversationHandler = async ({ user }: { user: selectedUserType[] }) => {
+  const createDmConversationHandler = async ({ user }: { user: selectedUserType[] }) => {
     if (selectedUser.length === 0) {
       return toast.error("Select atleast one user to start conversation")
     }
     if (selectedUser.length > 10) {
       return toast.error("You can't add more than 10 users")
     }
-    const conversation = await createConversation({ user: selectedUser })
-    console.log(selectedUser)
+
+    const conversation = await createDmConversation({ user: selectedUser })
     if (!conversation) {
       return toast.error("Error while creating conversation")
     }
+    // WIP: Work on making createDmConversation real-time
+    // const socket = getSocket()
+    // socket.connect()
+    // setSocketMetadata(socket, { userId: session?.user.id })
+    // socket.emit(SOCKET_EVENTS.CREATE_CONVERSATION, { userIds: selectedUser.map((user) => user.id) })
     toast.success("Conversation created successfully")
     return router.push(`/p/user/${conversation.id}`)
   }
@@ -159,7 +171,7 @@ export const StartChatButton = (
       type="submit"
       onClick={() => {
         // setExistingConversation([])
-        createConversationHandler({ user: selectedUser })
+        createDmConversationHandler({ user: selectedUser })
       }}
     >
       Start Chat

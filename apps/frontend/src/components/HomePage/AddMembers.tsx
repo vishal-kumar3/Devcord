@@ -14,11 +14,11 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react"
 import { User } from "@prisma/client"
 import { searchByUsernameForConversation } from "../../actions/user.action"
 import { debounce } from "../../utils/debounce"
-import { AddMembersToConversation, createConversation, getConversationByUserIdsInDM } from "../../actions/conversation.action"
+import { AddMembersToConversation, createDmConversation, getConversationByUserIdsInDM } from "../../actions/conversation.action"
 import { toast } from "sonner"
 import { Check } from "lucide-react"
 import Link from "next/link"
-import { getSocket } from "@/lib/socket.config"
+import { getSocket, setSocketMetadata } from "@/lib/socket.config"
 import { AddMembersData, SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const"
 import { UserConversationWithUser } from "@/types/userConversation.type"
 
@@ -162,16 +162,14 @@ export const AddMembersButton = (
       return toast.error("You can't add more than 10 users")
     }
 
-    const addedUsers = await AddMembersToConversation({ conversationId, users: user.map((u) => { return { id: u.id, username: u.username } }) })
+    const addedUsers = await AddMembersToConversation({ conversationId, totalMembers: user.length + restrictedUser.length, users: user.map((u) => { return { id: u.id, username: u.username } }) })
 
     if (!addedUsers) {
       return toast.error("Error while adding members")
     }
 
     const socket = getSocket()
-    socket.auth = {
-      room: conversationId
-    }
+    setSocketMetadata(socket, { room: conversationId })
 
     socket.emit(SOCKET_EVENTS.ADD_MEMBERS, {
       conversationId,
@@ -186,7 +184,6 @@ export const AddMembersButton = (
       className="w-full text-lg font-semibold"
       type="submit"
       onClick={() => {
-        console.log(selectedUser, conversationId, restrictedUser)
         if(!conversationId || restrictedUser.length === 0) return
           addMemberHandler({ user: selectedUser, restrictedUser })
       }}
