@@ -6,12 +6,13 @@ import { User } from "@prisma/client"
 import { useEffect, useState } from "react"
 import { getSocket, setSocketMetadata } from "@/lib/socket.config"
 import { SOCKET_EVENTS, TitleChangeData } from "@devcord/node-prisma/dist/constants/socket.const"
+import { ExtendedUser } from "@/next-auth"
 
 type DMButtonProps = {
   name: string
   image?: string
   href?: string
-  loggedUser?: User
+  loggedUser?: ExtendedUser
   conversationId?: string
 }
 

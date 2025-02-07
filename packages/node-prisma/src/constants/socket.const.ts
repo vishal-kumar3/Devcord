@@ -1,5 +1,6 @@
 import { User } from "@prisma/client"
 import { UserConversationWithUser } from "../types/conversation.types"
+import { FriendRequestWithSenderAndReceiver } from "../types/friend.types"
 
 export type TitleChangeData = {
   conversationId: string
@@ -36,6 +37,8 @@ export type createDmConversationData = {
   conversationId: string
 }
 
+export type FriendRquestData = FriendRequestWithSenderAndReceiver
+
 export const UserStatusType = {
   ONLINE: "online",
   OFFLINE: "offline",
@@ -55,4 +58,7 @@ export const SOCKET_EVENTS = {
   ADD_MEMBERS: "add-members",
   REMOVE_MEMBERS: "remove-members",
   CREATE_CONVERSATION: "create-conversation",
+  SEND_FRIEND_REQUEST: "send-friend-request",
+  RECEIVE_FRIEND_REQUEST: "receive-friend-request",
+  ACTION_FRIEND_REQUEST: "action-friend-request",
 }

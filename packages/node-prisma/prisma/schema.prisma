@@ -1,9 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
+// ---------- GENERATORS & DATASOURCES ----------
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,28 +8,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ---------- USER & ACCOUNT MODELS ----------
+
 model User {
-  id String @id @default(cuid())
-
-  githubId String? @unique
-  username String? @unique
-
+  id            String    @id @default(cuid())
+  username      String    @unique
   email         String    @unique
+  github_token  String?
   emailVerified DateTime?
   name          String?
-  github_token  String?
-  image         String?
+  avatar        String?
   banner        String?
   bio           String?
 
   role UserRole @default(USER)
 
-  dmAdmin       Conversation[]
-  accounts      Account[]
-  projects      Project[]
-  conversations UserConversation[]
-  messages      Message[]
-  reactions     Reaction[]
+  dmAdmin                Conversation[]
+  accounts               Account[]
+  ownedProjects          Project[]          @relation("ProjectOwner")
+  memberships            ProjectMember[]
+  conversations          UserConversation[]
+  messages               Message[]
+  reactions              Reaction[]
+  friendRequestsSent     FriendRequest[]    @relation("FriendRequestsSent")
+  friendRequestsReceived FriendRequest[]    @relation("FriendRequestsReceived")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -68,7 +65,33 @@ enum UserRole {
   ADMIN
 }
 
-// WIP: isPublic and if yes then user will require to ask for access to join project
+// ---------- FRIEND REQUEST MODEL ----------
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED // WITHDRAWN
+}
+
+model FriendRequest {
+  id String @id @default(cuid())
+
+  requesterId String
+  receiverId  String
+
+  receiver  User                @relation("FriendRequestsReceived", fields: [receiverId], references: [id])
+  requester User                @relation("FriendRequestsSent", fields: [requesterId], references: [id])
+  status    FriendRequestStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([requesterId, receiverId])
+}
+
+// ---------- PROJECT, MEMBERSHIP & ROLE MODELS ----------
+
 model Project {
   id          String  @id @default(cuid())
   name        String
@@ -78,16 +101,72 @@ model Project {
   repo        String? @unique
 
   categories Category[]
-
-  channels Channel[] // channels that are not in any category
-  roles    Role[]
+  channels   Channel[]
+  roles      Role[]
 
   ownerId String
-  owner   User   @relation(fields: [ownerId], references: [id])
+  owner   User   @relation("ProjectOwner", fields: [ownerId], references: [id])
+
+  // Memberships track which users belong to the project.
+  memberships ProjectMember[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+/// Join table for users that belong to a project.
+/// Optionally, you can assign a role to a member here.
+model ProjectMember {
+  userId    String
+  projectId String
+  // Optionally, assign a role per membership
+  roleId    String?
+
+  joinedAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  role    Role?   @relation("RoleProjectMembers", fields: [roleId], references: [id])
+
+  @@id([userId, projectId])
+}
+
+model Role {
+  id    String  @id @default(cuid())
+  name  String
+  color String?
+
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+
+  // Back-relation for project memberships that use this role.
+  projectMembers ProjectMember[] @relation("RoleProjectMembers")
+
+  // Instead of implicit many-to-many fields, we use an explicit join model.
+  roleChannels RoleChannel[] @relation("RoleToRoleChannel")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Explicit join model for Role <-> Channel relation with custom attributes.
+model RoleChannel {
+  roleId    String
+  channelId String
+
+  // Use explicit relation names.
+  role    Role    @relation("RoleToRoleChannel", fields: [roleId], references: [id])
+  channel Channel @relation("ChannelToRoleChannel", fields: [channelId], references: [id])
+
+  // Uncomment and add custom permission attributes if needed.
+  // canPost   Boolean @default(true)
+  // canDelete Boolean @default(false)
+  // canEdit   Boolean @default(false)
+
+  @@id([roleId, channelId])
+}
+
+// ---------- CATEGORY & CHANNEL MODELS ----------
 
 model Category {
   id    String @id @default(cuid())
@@ -115,27 +194,14 @@ model Channel {
   category   Category? @relation(fields: [categoryId], references: [id])
   categoryId String?
 
-  conversations Conversation?
+  /// A channel may have a default conversation (e.g., text chat)
+  conversation Conversation?
 
-  allowedRoles Role[]
+  // Instead of an implicit many-to-many field, we use the join model.
+  roleChannels RoleChannel[] @relation("ChannelToRoleChannel")
 
   forumLayout ForumLayout?
-
-  order Int?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Role {
-  id    String  @id @default(cuid())
-  name  String
-  color String?
-
-  project   Project @relation(fields: [projectId], references: [id])
-  projectId String
-
-  allowedChannels Channel[]
+  order       Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -163,19 +229,25 @@ enum ChannelType {
   VIDEO
 }
 
+// ---------- CONVERSATION & USERCONVERSATION MODELS ----------
+
 model Conversation {
   id         String           @id @default(cuid())
   name       String?
   type       ConversationType
   nameEdited DateTime?
 
-  admins User[] // only for DM and GROUP_DM
-  users  UserConversation[] // only for DM and GROUP_DM
+  // For DM and GROUP_DM, these arrays represent the admins and participants.
+  admins User[]
+  users  UserConversation[]
 
-  messages  Message[]
-  threads   Message[] @relation("ThreadConversation")
-  channel   Channel?  @relation(fields: [channelId], references: [id])
-  channelId String?   @unique
+  messages Message[]
+
+  // Add a back-relation for threads (from Thread.parentConversation).
+  threads Thread[] @relation("ParentConversationThreads")
+
+  channel   Channel? @relation(fields: [channelId], references: [id])
+  channelId String?  @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -185,10 +257,10 @@ enum ConversationType {
   DM
   GROUP_DM
   CHANNEL
+  // THREAD conversations will now be managed explicitly via the Thread model.
 }
 
-
-// Consider if you want to track any role/permission or status per conversation (for example, muted status, custom nicknames, etc.). That can be added to this join model later if needed.
+// Join table for conversations (DMs, Group chats, etc.)
 model UserConversation {
   userId         String
   conversationId String
@@ -200,7 +272,7 @@ model UserConversation {
   @@id([userId, conversationId])
 }
 
-// WIP: create schema for invite token
+// ---------- MESSAGE & THREAD MODELS ----------
 
 model Message {
   id             String  @id @default(cuid())
@@ -208,29 +280,29 @@ model Message {
   senderId       String?
   conversationId String
 
-  replyToId            String?
-  threadConversationId String?
-
-  prevSender    String? // to combine msg from same sender
-  prevCreatedAt DateTime? // to combine msg from same sender
+  replyToId String?
 
   fileUrl    String?
   duration   Int?
   systemData String?
 
-  type               MessageType
-  sender             User?         @relation(fields: [senderId], references: [id])
-  conversation       Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  reactions          Reaction[]
-  replyTo            Message?      @relation("ReplyTo", fields: [replyToId], references: [id])
-  replies            Message[]     @relation("ReplyTo")
-  threadConversation Conversation? @relation("ThreadConversation", fields: [threadConversationId], references: [id])
+  type         MessageType
+  sender       User?        @relation(fields: [senderId], references: [id])
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  reactions    Reaction[]
+  replyTo      Message?     @relation("ReplyTo", fields: [replyToId], references: [id])
+  replies      Message[]    @relation("ReplyTo")
+
+  /// Instead of linking a message directly to a thread conversation,
+  /// we now refer to the Thread model explicitly.
+  threadId String?
+  thread   Thread? @relation(fields: [threadId], references: [id])
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   editedAt  DateTime?
 
-  @@index([conversationId, prevSender])
+  @@index([conversationId])
 }
 
 enum MessageType {
@@ -242,12 +314,32 @@ enum MessageType {
   SYSTEM
 }
 
+/// Dedicated model for Threads, which groups messages together.
+/// This lets you track metadata such as lastActiveAt for auto‑deletion.
+model Thread {
+  id                   String       @id @default(cuid())
+  /// Reference to the parent conversation (e.g., the channel conversation)
+  parentConversationId String
+  parentConversation   Conversation @relation("ParentConversationThreads", fields: [parentConversationId], references: [id])
+
+  /// This field should be updated whenever a new message is added to the thread.
+  lastActiveAt DateTime @default(now())
+
+  /// All messages in this thread.
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- REACTION MODEL ----------
+
 model Reaction {
   id        Int      @id @default(autoincrement())
   emoji     String
   messageId String
   message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }

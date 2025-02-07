@@ -3,26 +3,10 @@ import { prisma } from '@devcord/node-prisma';
 import { cache } from "react";
 import { getAuthUser } from './auth.action';
 
-export const getUserFromGithubId = async (githubId: string) => {
-  if (!githubId) return null;
-
-  const user = await prisma.user.findUnique({
-    where: {
-      githubId: `${githubId}`
-    }
-  }).catch((err) => {
-    console.error(err.stack)
-    return null;
-  })
-
-
-  return user;
-}
-
 export const getLoggedInUser = cache(async () => {
   const session = await getAuthUser()
 
-  if(!session) return null
+  if (!session) return null
 
   const user = await prisma.user.findUnique({
     where: {
@@ -62,4 +46,30 @@ export const searchByUsernameForConversation = async ({ username, restrictedUser
   });
 
   return users;
+}
+
+export const getUserByUsername = async (username: string) => {
+  if (!username || username.trim() === "") return null;
+
+  const session = await getAuthUser();
+  if (!session) return null;
+
+  const user = await prisma.user.findFirst({
+    where: {
+      username: {
+        equals: username,
+        mode: 'insensitive'
+      },
+      NOT: {
+        id: {
+          equals: session.user.id,
+        },
+      }
+    },
+  }).catch((err) => {
+    console.error(err.stack);
+    return null;
+  });
+
+  return user;
 }

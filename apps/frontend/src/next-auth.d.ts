@@ -10,6 +10,8 @@ export type ExtendedUser = DefaultSession["user"] & {
   role: UserRole
   username: string
   github_token: string
+  bio: string
+  avatar: string
 }
 
 

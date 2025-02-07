@@ -16,11 +16,9 @@ export const getSocket = (): Socket => {
   return socket
 }
 
-export const connectSocket = (socket: Socket) => {
-  socket.connect()
-}
 
 export const setSocketMetadata = (socket: Socket, metadata: SocketMetadataType) => {
+  socket.connect()
   socket.auth = {
     room: metadata.room,
     userId: metadata.userId

@@ -31,7 +31,9 @@
       "@devcord/node-prisma": [
         "../../packages/node-prisma/dist"
       ]
-    }
+    },
+    "noImplicitAny": false,
+    "skipDefaultLibCheck": true 
   },
   "include": ["next-auth.d.ts", "next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
