@@ -58,7 +58,6 @@ export const sendFriendRequest = async (username: string) => {
   return { data: request, error: null }
 }
 
-
 export const getSentRequests = async (session: Session) => {
 
   if (!session) {
@@ -76,7 +75,6 @@ export const getSentRequests = async (session: Session) => {
       receiver: true
     }
   })
-
   return { data: requests, error: null }
 }
 
@@ -102,8 +100,41 @@ export const getReceivedRequests = async (session: Session) => {
   return { data: requests, error: null }
 }
 
+export const deleteAcceptedRequests = async ({ friendId, status }: { friendId: string, status: FriendRequestStatus }) => {
+  const session = await getAuthUser()
 
-export const updateFriendRequest = async ({ friendId, status }: { friendId: string, status: FriendRequestStatus }) => {
+  if (!session) return { data: null, error: "User not found" }
+
+  const request = await prisma.friendRequest.findFirst({
+    where: {
+      OR: [
+        {
+          requesterId: friendId,
+          receiverId: session.user.id,
+          status: "ACCEPTED"
+        },
+        {
+          requesterId: session.user.id,
+          receiverId: friendId,
+          status: "ACCEPTED"
+        }
+      ]
+    }
+  }).catch(e => null)
+
+  if (!request) return { data: null, error: "Request not found" }
+
+  const deletedRequest = await prisma.friendRequest.delete({
+    where: {
+      id: request.id
+    }
+  })
+
+  return { data: deletedRequest, error: null }
+}
+
+
+export const updateReceivedFriendRequest = async ({ friendId, status }: { friendId: string, status: FriendRequestStatus }) => {
   const session = await getAuthUser()
 
   if (!session) return { data: null, error: "User not found" }
@@ -115,7 +146,9 @@ export const updateFriendRequest = async ({ friendId, status }: { friendId: stri
         receiverId: session.user.id
       }
     }
-  })
+  }).catch(e => null)
+
+  console.log(request)
 
   if (!request) return { data: null, error: "Request not found" }
 
@@ -135,6 +168,39 @@ export const updateFriendRequest = async ({ friendId, status }: { friendId: stri
   return { data: updateRequest, error: null }
 }
 
+export const updateSentFriendRequest = async ({ friendId, status }: { friendId: string, status: FriendRequestStatus }) => {
+  const session = await getAuthUser()
+
+  if (!session) return { data: null, error: "User not found" }
+
+  const request = await prisma.friendRequest.findUnique({
+    where: {
+      requesterId_receiverId: {
+        requesterId: session.user.id,
+        receiverId: friendId
+      }
+    }
+  }).catch(e => null)
+
+  console.log(request)
+
+  if (!request) return { data: null, error: "Request not found" }
+
+  const updateRequest = await prisma.friendRequest.update({
+    where: {
+      id: request.id
+    },
+    data: {
+      status: status
+    },
+    include: {
+      requester: true,
+      receiver: true
+    }
+  })
+
+  return { data: updateRequest, error: null }
+}
 
 export const getFriendsList = async (session?: Session) => {
 
@@ -177,7 +243,6 @@ export const getFriendsList = async (session?: Session) => {
 
   return filteredFriends
 }
-
 
 export const getPendingRequests = async (session: Session) => {
 

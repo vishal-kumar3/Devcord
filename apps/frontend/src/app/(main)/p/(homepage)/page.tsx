@@ -10,21 +10,17 @@ const page = async () => {
   const session = await getAuthUser()
   if (!session) return null
 
-  const sentRequest = await getSentRequests(session)
-  const pendingRequest = await getReceivedRequests(session)
 
   return (
     <TabSwitcher
       defaultTab="Friends"
       tabs={[
         { name: "Online", component: <div>Online</div> },
-        { name: "All", component: <FriendsList /> },
+        { name: "All", component: <FriendsList session={session} /> },
         {
           name: "Pending", component:
             <PendingRequest
               session={session}
-              sentRequest={sentRequest.data || []}
-              receivedRequest={pendingRequest.data || []}
             />
         },
         { name: "Add Friend", component: <AddFriend /> }

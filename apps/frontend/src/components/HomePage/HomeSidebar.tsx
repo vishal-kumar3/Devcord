@@ -3,9 +3,10 @@ import { Input } from "../ui/input"
 import { getConversationByUserId } from "../../actions/conversation.action"
 import { DMButton } from "./DmButton"
 import { getAuthUser } from "@/actions/auth.action"
-import { DevPopover } from "../DevPopover"
 import { ExtendedUser } from "@/next-auth"
 import DM from "./Dm"
+import { Session } from "next-auth"
+import { getFriendsList } from "@/actions/friend.action"
 
 
 
@@ -31,7 +32,7 @@ const HomeSidebar = async () => {
         <div className="space-y-1 text-sm">
           <div className="text-neutral-400 flex justify-between font-semibold">
             <p className="font-semibold">DIRECT MESSAGE</p>
-            <DM session={session} />
+            <DMFetch session={session} />
           </div>
           {
             conversations?.map((conversation) => {
@@ -67,6 +68,15 @@ const AccountCard = ({ user }: { user: ExtendedUser }) => {
         {/* WIP: animated svg here:- mute, headphone, settings */}
       </div>
     </div>
+  )
+}
+
+const DMFetch = async ({ session }: { session: Session }) => {
+
+  const friends = await getFriendsList(session) ?? []
+
+  return (
+    <DM session={session} friends={friends} />
   )
 }
 

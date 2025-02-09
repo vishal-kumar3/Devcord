@@ -12,14 +12,14 @@ const InlineUserCard = (
   }
 ) => {
   return (
-    <div className="flex items-center bg-back-two justify-between">
+    <div className="group cursor-pointer flex items-center p-2 rounded-xl hover:bg-back-two transition-all ease-in-out justify-between">
       <div className="flex items-center gap-4">
-        <Avatar className="size-[45px]">
+        <Avatar className="size-[45px] rounded-full aspect-square">
           <AvatarImage className="" src={user.avatar || ""} alt="" />
           <AvatarFallback>{user.username.slice(0, 1)}</AvatarFallback>
         </Avatar>
         <div>
-          <div className="text-base font-semibold">{user.username}</div>
+          <div className="text-base font-semibold group-hover:underline">{user.username}</div>
           <div className="text-sm">{user.name}</div>
         </div>
       </div>
