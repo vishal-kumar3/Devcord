@@ -62,7 +62,7 @@ const AccountCard = ({ user }: { user: ExtendedUser }) => {
       </Avatar>
       <div className="">
         <p className="text-lg leading-none">{user.username}</p>
-        <p className="text-sm text-neutral-400 leading-none">{user.bio}</p>
+        <p className="text-sm text-neutral-400 leading-none">{user.id}</p>
       </div>
       <div>
         {/* WIP: animated svg here:- mute, headphone, settings */}
@@ -73,7 +73,7 @@ const AccountCard = ({ user }: { user: ExtendedUser }) => {
 
 const DMFetch = async ({ session }: { session: Session }) => {
 
-  const friends = await getFriendsList(session) ?? []
+  const friends = await getFriendsList(session)
 
   return (
     <DM session={session} friends={friends} />

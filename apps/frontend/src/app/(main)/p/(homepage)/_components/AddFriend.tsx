@@ -1,11 +1,15 @@
 "use client"
 import { sendFriendRequest } from "@/actions/friend.action"
+import { getSocket, setSocketMetadata } from "@/lib/socket.config"
+import { useSocket } from "@/providers/socket.provider"
+import { SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const"
 import { useState } from "react"
 
 export const AddFriend = () => {
   const [requestError, setRequestError] = useState<string | null>(null)
   const [requestSuccess, setRequestSuccess] = useState<string | null>(null)
   const [username, setUsername] = useState<string>("")
+  const { socket } = useSocket()
 
   const handlSendFriendRequest = async (username: string) => {
     setRequestError(null)
@@ -13,8 +17,14 @@ export const AddFriend = () => {
     if (!username || username == "" || username.trim() == "") return setRequestError("Please enter a valid username")
     const { data, error } = await sendFriendRequest(username)
     if (!data) return setRequestError(error)
-    if (data.status === "ACCEPTED") return setRequestSuccess("Friend request accepted")
-    if (data.status === "PENDING") return setRequestSuccess("Friend request sent!")
+    if (data.status === "ACCEPTED") {
+      socket?.emit(SOCKET_EVENTS.ACCEPT_FRIEND_REQUEST, data)
+      return setRequestSuccess("Friend request accepted")
+    }
+    if (data.status === "PENDING") {
+      socket?.emit(SOCKET_EVENTS.SEND_FRIEND_REQUEST, data)
+      return setRequestSuccess("Friend request sent!")
+    }
     return setRequestError("Something went wrong")
   }
 
@@ -45,8 +55,8 @@ export const AddFriend = () => {
           className="rounded-xl p-2 bg-blue-500"
         >Send Friend Request</button>
       </form>
-      <p className="text-red-500 px-2">{ requestError }</p>
-      <p className="text-text-success px-2">{ requestSuccess }</p>
+      <p className="text-red-500 px-2">{requestError}</p>
+      <p className="text-text-success px-2">{requestSuccess}</p>
     </div>
   )
 }

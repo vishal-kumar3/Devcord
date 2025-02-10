@@ -12,7 +12,7 @@ import {
   TypingData,
   UserStatusType
 } from "@devcord/node-prisma/dist/constants/socket.const.js"
-import { handleFriendEvents } from "./events/friend.event.js";
+import { handleFriendEvents } from "./events/friend.socket.js";
 
 export interface CustomSocket extends Socket {
   room?: string
@@ -22,21 +22,26 @@ export interface CustomSocket extends Socket {
 export const setupSocket = (io: Server) => {
   io.use((socket: CustomSocket, next) => {
     const room = socket.handshake.auth.room || socket.handshake.headers.room;
-    const userId = socket.handshake.auth.userId || socket.handshake.headers.userId || null;
+    const userId = socket.handshake.query.userId as string | undefined;
+
+    if (!userId) {
+      return next(new Error("Missing userId"));
+    }
 
     // if (!room) {
-    //   return next(new Error("Invalid room"));
+      //   return next(new Error("Invalid room"));
     // }
-    
     socket.room = room;
-    socket.userId = userId;
-    consumeMessage("chat", room, socket);
+    socket.userId = userId as string;
     return next();
   });
 
   io.on(SOCKET_EVENTS.CONNECTION, (socket: CustomSocket) => {
     console.log("The socket is connected:- ", socket.id);
-    socket.join(socket.room);
+    if (socket.room) {
+      consumeMessage("chat", socket.room, socket);
+      socket.join(socket.room);
+    }
     socket.join(socket.userId);
     socket.join(Rooms.USER_STATUS)
 

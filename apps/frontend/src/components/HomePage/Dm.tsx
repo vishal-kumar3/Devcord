@@ -5,7 +5,7 @@ import { User } from "@prisma/client"
 
 
 
-const DM = ({ session, friends }: { session: Session, friends: User[] }) => {
+const DM = ({ session, friends }: { session: Session, friends: {id: string, user:User[]} }) => {
 
 
 

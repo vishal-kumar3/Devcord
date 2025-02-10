@@ -1,12 +1,14 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSocket } from "@/providers/socket.provider";
 import { FriendRequestStatus } from "@prisma/client";
 import Image from "next/image";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
+import { Socket } from "socket.io-client";
 import { toast } from "sonner";
 
 export type RequestFooterAction = {
   updateRequest: (params: { friendId: string, status: FriendRequestStatus }) => Promise<{ data: any; error: any }>;
-  status: FriendRequestStatus;
+  status?: FriendRequestStatus;
   icon?: {
     src: string;
     alt: string;
@@ -14,14 +16,17 @@ export type RequestFooterAction = {
   tooltipContent?: string;
   actionNode?: React.ReactNode
   friendId: string;
+  socketEvent: (socket: Socket, data: any) => void;
 }
 
 export const RequestFooter = <T extends { id: string }>({
   setRequests,
   actions,
+  socket
 }: {
   setRequests: Dispatch<SetStateAction<T[]>>;
-  actions: RequestFooterAction[]
+  actions: RequestFooterAction[];
+  socket: Socket | null;
 }) => {
   return (
     <div className="flex space-x-4">
@@ -31,9 +36,12 @@ export const RequestFooter = <T extends { id: string }>({
             <TooltipTrigger asChild>
               <button
                 onClick={async () => {
-                  const { data, error } = await action.updateRequest({ friendId: action.friendId, status: action.status });
+                  const { data, error } = await action.updateRequest({ friendId: action.friendId, status: action.status! });
                   if (!data || error) {
                     return toast.error(error || `Failed to process request`);
+                  }
+                  if (socket) {
+                    action.socketEvent(socket, data);
                   }
                   setRequests((prev) => prev.filter((req) => req.id !== data.id));
                   return

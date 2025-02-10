@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Sidebar from '../../../components/Sidebar/Sidebar';
+import { SocketProvider } from '@/providers/socket.provider';
 
 export const metadata: Metadata = {
   title: '',
@@ -12,9 +13,11 @@ export default async function Layout({
   children: React.ReactNode,
 }) {
   return (
-    <div className='relative flex'>
-      <Sidebar />
-      {children}
-    </div>
+    <SocketProvider>
+      <div className='relative flex'>
+        <Sidebar />
+        {children}
+      </div>
+    </SocketProvider>
   )
 }
