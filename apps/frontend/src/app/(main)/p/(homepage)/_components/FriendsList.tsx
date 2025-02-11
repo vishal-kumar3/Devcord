@@ -11,26 +11,26 @@ import { useSocket } from "@/providers/socket.provider"
 import { FriendRequestWithSenderAndReceiver } from "@/types/friend.type"
 
 
-const FriendsList = ({ session }: { session: Session }) => {
-  const [friendsList, setFriendsList] = useState<{id: string, user:User}[]>([])
-  const { socket } = useSocket()
-
-  const friendFooterActionsCreator = (receivedId: string): RequestFooterAction[] => {
-    return [
-      {
-        updateRequest: deleteAcceptedRequests,
-        friendId: receivedId,
-        icon: {
-          src: "/icons/Remove_Friend.svg",
-          alt: "Remove Friend",
-        },
-        tooltipContent: "Remove Friend",
-        socketEvent(socket, data) {
-          socket.emit(SOCKET_EVENTS.REMOVE_FRIEND, data)
-        },
+const friendFooterActionsCreator = (receivedId: string): RequestFooterAction[] => {
+  return [
+    {
+      updateRequest: deleteAcceptedRequests,
+      friendId: receivedId,
+      icon: {
+        src: "/icons/Remove_Friend.svg",
+        alt: "Remove Friend",
       },
-    ]
-  }
+      tooltipContent: "Remove Friend",
+      socketEvent(socket, data) {
+        socket.emit(SOCKET_EVENTS.REMOVE_FRIEND, data)
+      },
+    },
+  ]
+}
+
+const FriendsList = ({ session }: { session: Session }) => {
+  const [friendsList, setFriendsList] = useState<{ id: string, user: User }[]>([])
+  const { socket } = useSocket()
 
   useEffect(() => {
     const fetchFriendsList = async (session: Session) => {

@@ -22,3 +22,9 @@ export type ConversationWithMembers = Prisma.ConversationGetPayload<{
     }
   }
 }>
+
+export type ConversationWithUsers = Prisma.ConversationGetPayload<{
+  include: {
+    users: true
+  }
+}>

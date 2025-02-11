@@ -1,14 +1,13 @@
 import { User } from "@prisma/client"
 import { UserConversationWithUser } from "../../types/userConversation.type"
 import Image from "next/image"
-import { selectedUserType } from "../HomePage/CreatePersonalConversation"
 import { AddMembers } from "../HomePage/AddMembers"
 import { useEffect, useState } from "react"
-import { getSocket, setSocketMetadata } from "@/lib/socket.config"
+import { setSocketMetadata } from "@/lib/socket.config"
 import { AddMembersData, RemoveMembersData, SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const"
 import { removeMemberFromConversation } from "@/actions/conversation.action"
-import { Socket } from "socket.io-client"
 import { toast } from "sonner"
+import { useSocket } from "@/providers/socket.provider"
 
 // WIP: socket for online offline, also ui
 // WIP: Add user to conversation
@@ -24,9 +23,10 @@ export function MembersList(
 ) {
   const [members, setMembers] = useState<UserConversationWithUser[]>(membersList)
 
-  const socket = getSocket()
+  const { socket } = useSocket()
 
   useEffect(() => {
+    if(!socket) return
     socket.connect()
     setSocketMetadata(socket, { room: conversationId })
 
@@ -43,7 +43,7 @@ export function MembersList(
 
     socket.on(SOCKET_EVENTS.REMOVE_MEMBERS, handleRemoveMembers)
     socket.on(SOCKET_EVENTS.ADD_MEMBERS, handleAddMembers)
-    
+
     return () => {
       socket.off(SOCKET_EVENTS.ADD_MEMBERS, handleAddMembers)
       socket.off(SOCKET_EVENTS.REMOVE_MEMBERS, handleRemoveMembers)
@@ -61,7 +61,7 @@ export function MembersList(
         {
           members.map((member) => {
             return (
-              <Member socket={socket} key={member.userId} conversationId={conversationId} user={member.user} />
+              <Member key={member.userId} conversationId={conversationId} user={member.user} />
             )
           })
         }
@@ -71,12 +71,13 @@ export function MembersList(
 }
 
 
-const Member = ({ user, conversationId, socket }: { user: User, conversationId: string, socket: Socket}) => {
+const Member = ({ user, conversationId }: { user: User, conversationId: string}) => {
+  const { socket } = useSocket()
   return (
     <div className="flex gap-2 items-center hover:bg-back-three cursor-pointer p-1">
       <div className="size-[40px rounded-full">
         <Image
-          src={user.image || '/images/default-profile.png'}
+          src={user.avatar || '/images/default-profile.png'}
           alt={user.name || user.username || 'User'}
           className="rounded-full overflow-hidden"
           width={40}
@@ -96,7 +97,7 @@ const Member = ({ user, conversationId, socket }: { user: User, conversationId: 
         }
 
         if (remainingUsers) {
-          socket.emit(SOCKET_EVENTS.REMOVE_MEMBERS, {
+          socket?.emit(SOCKET_EVENTS.REMOVE_MEMBERS, {
             conversationId,
             members: [user.id]
           })

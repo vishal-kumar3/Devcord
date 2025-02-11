@@ -6,6 +6,8 @@ import { FriendRequestStatus, User } from "@prisma/client"
 import { Session } from "next-auth"
 
 
+
+
 export const sendFriendRequest = async (username: string) => {
   const session = await getAuthUser()
 
@@ -102,7 +104,6 @@ export const getReceivedRequestById = async (requestId: string) => {
   return { data: request, error: null }
 }
 
-
 export const getReceivedRequests = async (session: Session) => {
 
   if (!session) {
@@ -158,6 +159,7 @@ export const deleteAcceptedRequests = async ({ friendId, status }: { friendId: s
 
   return { data: deletedRequest, error: null }
 }
+
 export const updateReceivedFriendRequest = async ({ friendId, status }: { friendId: string, status: FriendRequestStatus }) => {
   const session = await getAuthUser()
 
@@ -268,15 +270,16 @@ export const getFriendsList = async (session?: Session) => {
 
   return filteredFriends
 }
-export const getPendingRequests = async (session: Session) => {
+
+export const getFriendsListForDM = async (session?: Session) => {
 
   if (!session) {
     const trySession = await getAuthUser()
-    if (!trySession) return { data: null, error: "User Unauthenticated" }
+    if (!trySession) return null
     session = trySession
   }
 
-  const requests = await prisma.friendRequest.findMany({
+  const friends = await prisma.friendRequest.findMany({
     where: {
       OR: [
         {
@@ -286,13 +289,26 @@ export const getPendingRequests = async (session: Session) => {
           requesterId: session.user.id
         }
       ],
-      status: "PENDING"
+      status: "ACCEPTED"
     },
-    include: {
+    select: {
+      requesterId: true,
+      receiverId: true,
       requester: true,
-      receiver: true
+      receiver: true,
     }
-  })
+  }).catch(e => null)
 
-  return { data: requests, error: null }
+  if (!friends) return null
+
+  const filteredFriends = friends.map((friendRequest) => {
+    if (friendRequest.receiverId === session.user.id) {
+      return friendRequest.requester
+    } else {
+      return friendRequest.receiver
+    }
+  }).filter(Boolean);
+
+
+  return filteredFriends
 }

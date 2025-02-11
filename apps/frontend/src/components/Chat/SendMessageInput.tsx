@@ -1,23 +1,22 @@
 import { User } from "@prisma/client"
-import { ChangeEvent, Dispatch, SetStateAction, useEffect, useRef, useState } from "react"
-import { Socket } from "socket.io-client"
+import { ChangeEvent, useEffect, useRef, useState } from "react"
 import { TypingEvent } from "./Chat"
 import { SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { setSocketMetadata } from "@/lib/socket.config"
+import { useSocket } from "@/providers/socket.provider"
 
 export const SendMessageInput = (
-  { user, conversationId, socket, handleMessageSend }
+  { user, conversationId, handleMessageSend }
     :
     {
       user: User,
       conversationId: string,
-      socket: Socket,
       handleMessageSend: (data: FormData) => void,
     }
 ) => {
-
+  const { socket } = useSocket()
   const [message, setMessage] = useState<string>("")
   const [typingUsers, setTypingUsers] = useState<User[]>([])
   const incomingTypingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -25,6 +24,7 @@ export const SendMessageInput = (
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => {
+    if (!socket) return
     setSocketMetadata(socket, { room: conversationId })
 
     const handleTyping = (data: TypingEvent) => {
@@ -58,6 +58,7 @@ export const SendMessageInput = (
 
 
   const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    if(!socket) return
     setMessage(e.target.value)
     adjustTextareaHeight()
 
@@ -102,7 +103,7 @@ export const SendMessageInput = (
                 key={user.id || index}
                 className="size-[15px] rounded-full"
                 alt={user.name?.slice(0, 1) || user.username?.slice(0, 1) || user.email?.slice(0, 1)}
-                src={user.image || "/images/default-profile.png"}
+                src={user.avatar || "/images/default-profile.png"}
                 width={15}
                 height={15}
               />

@@ -10,13 +10,12 @@ import { MessageWithSender } from "@/types/message.types"
 import { User } from "@prisma/client"
 import { SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const.js"
 import { SendMessageInput } from "./SendMessageInput"
+import { useSocket } from "@/providers/socket.provider"
 
 export type ChatMsg = {
   msg: string
   user: User
   conversationId: string
-  prevSender?: string
-  prevCreatedAt?: Date
 }
 
 export type TypingEvent = {
@@ -44,6 +43,7 @@ const Chat = (
   const [chat, setChat] = useState<MessageWithSender[]>(chat_message || [])
   const [showMembersList, setShowMembersList] = useState(false)
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const { socket } = useSocket()
 
   const handleMessageSend = (data: FormData) => {
     const msg = data.get("msg") as string
@@ -52,18 +52,16 @@ const Chat = (
         msg: msg,
         user: user,
         conversationId,
-        prevSender: chat.length !== 0 ? chat.slice(-1)[0].senderId : null,
-        prevCreatedAt: chat.length !== 0 ? chat.slice(-1)[0].createdAt : null
       } as ChatMsg
-      socket.emit(SOCKET_EVENTS.MESSAGE, send)
+      socket?.emit(SOCKET_EVENTS.MESSAGE, send)
     }
   }
 
-  const socket = getSocket()
 
   useEffect(() => {
+    if (!socket) return
     socket.connect()
-    setSocketMetadata(socket, { userId: user.id, room: conversationId })
+    setSocketMetadata(socket, { room: conversationId })
 
     const handleMessage = (data: MessageWithSender) => {
       setChat((prevChat) => [...prevChat, data])
@@ -104,7 +102,7 @@ const Chat = (
         )}
         style={{ gridArea: "aside" }}
       >
-        <MembersList conversationId={conversationId}  membersList={conversation.users} />
+        <MembersList conversationId={conversationId} membersList={conversation.users} />
       </aside>
       <main
         className="overflow-y-auto flex flex-col"
@@ -120,7 +118,7 @@ const Chat = (
           })
         }
       </main>
-      <SendMessageInput user={user} conversationId={conversationId} socket={socket} handleMessageSend={handleMessageSend} />
+      <SendMessageInput user={user} conversationId={conversationId} handleMessageSend={handleMessageSend} />
     </div>
   )
 }

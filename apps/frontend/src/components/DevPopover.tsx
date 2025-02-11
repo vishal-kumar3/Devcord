@@ -24,7 +24,7 @@ export const DevPopover = ({
           <Image src="/icons/Plus.svg" alt="+" width={20} height={20} />
         </button>
       </PopoverTrigger>
-      <PopoverContent side="right" align="start">
+      <PopoverContent className="min-w-[400px]" side="right" align="start">
         <div className="p-4 pb-0">
           <header>
             <h1 className="font-bold text-lg">{title || "Title"}</h1>
@@ -32,7 +32,7 @@ export const DevPopover = ({
           </header>
           {Main || <p>Main</p>}
         </div>
-        <footer className="bg-back-one p-4">
+        <footer className="bg-back-one w-full p-4">
           {Footer || <p>Footer</p>}
         </footer>
       </PopoverContent>

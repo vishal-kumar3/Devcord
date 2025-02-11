@@ -43,7 +43,7 @@ export const setupSocket = (io: Server) => {
       socket.join(socket.room);
     }
     socket.join(socket.userId);
-    socket.join(Rooms.USER_STATUS)
+    // socket.join(Rooms.USER_STATUS)
 
     handleFriendEvents(socket, io);
 

@@ -26,7 +26,7 @@ const Message = ({ message }: { message: MessageWithSender }) => {
         {
           combine ? null : (
             <Image
-              src={message.sender?.image || "/images/avatar.png"}
+              src={message.sender?.avatar || "/images/avatar.png"}
               className="rounded-full size-[40px] cursor-pointer"
               alt="avatar"
               width={40}

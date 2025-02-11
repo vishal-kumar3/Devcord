@@ -18,25 +18,3 @@ export const getMessageByConversationId = async (conversationId: string) => {
 
   return messages
 }
-
-export const getNextCombinedMessage = async (senderId: string, createdAt: Date) => {
-  // WIP: Logic glt h
-  const msg_duration = new Date(createdAt.getTime() + 10 * 60 * 1000)
-
-  const message = await prisma.message.findFirst({
-    where: {
-      prevSender: senderId,
-      prevCreatedAt: {
-        gte: msg_duration,
-        lte: createdAt
-      }
-    }
-  }).catch((e) => {
-    console.error("Error while fetching next combined message", e.stack)
-    return null
-  })
-
-  if(!message) return null
-
-  return message
-}

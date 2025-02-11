@@ -46,10 +46,8 @@ export const consumeMessage = async (topic: string, roomId: string, socket: Cust
         const db_message = await prisma.message.create({
           data: {
             content: message_data.msg,
-            senderId: message_data.user.id,
-            conversationId: message_data.conversationId,
-            prevSender: message_data.prevSender || null,
-            prevCreatedAt: message_data.prevCreatedAt || null,
+            sender: { connect: { id: message_data.user.id } },
+            conversation: { connect: { id: message_data.conversationId } },
             type: "TEXT"
           },
           include: {

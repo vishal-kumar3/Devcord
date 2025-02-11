@@ -6,6 +6,77 @@ import { selectedUserType } from '@/components/HomePage/CreatePersonalConversati
 import { getAuthUser } from './auth.action';
 
 
+export const createDMConversation = async ({ user }: { user: selectedUserType[] }) => {
+  if (user.length == 0 || user.length > 10) return null
+
+  const session = await getAuthUser()
+  if (!session) return null
+
+  user.push({
+    id: session?.user.id,
+    username: session?.user.username as string
+  })
+
+  const isPersonal = user.length == 2
+  const convUser = user.map((user) => {
+    return { userId: user.id }
+  })
+
+
+  const name = user.map((user) => user.username).join(', ')
+
+  const conversation = await prisma.conversation.create({
+    data: {
+      name: name,
+      type: isPersonal ? 'DM' : 'GROUP_DM',
+      users: {
+        createMany: {
+          data: convUser
+        }
+      },
+      admins: {
+        connect: {
+          id: session.user.id
+        }
+      }
+    }
+  }).catch(err => {
+    return null
+  })
+
+  return conversation
+}
+
+export const getExistingConversationByUserIds = async (userIds: string[]) => {
+  if (!userIds || userIds.length == 0) return null
+  const session = await getAuthUser()
+  if (!session) return null
+
+  userIds.push(session.user.id)
+
+  const conversations = await prisma.conversation.findMany({
+    where: {
+      users: {
+        every: {
+          userId: { in: userIds }
+        }
+      }
+    },
+    include: {
+      users: true
+    }
+  });
+
+  console.log("[Before Filter] Conversations:- ", conversations)
+
+  // Filter out conversations that have more or fewer users than provided userIds
+  return conversations.filter(conversation =>
+    conversation.users.length === userIds.length
+  );
+}
+
+// ! Older version of the code
+
 export const createDmConversation = async ({ user }: { user: selectedUserType[] }) => {
 
   if (user.length == 0 || user.length > 10) return null
@@ -98,7 +169,8 @@ export const ChangeConversationName = async (conversationId: string, name: strin
       id: conversationId
     },
     data: {
-      name
+      name,
+      nameEdited: new Date(),
     }
   }).catch(err => {
     console.error("Error while updating conversation name", err.stack)
@@ -131,7 +203,7 @@ export const AddMembersToConversation = async (
           })
         }
       },
-      isPersonal: totalMembers <= 2
+      type: totalMembers > 2 ? 'GROUP_DM' : 'DM'
     },
     include: {
       users: true
@@ -221,7 +293,10 @@ export const getConversationByUserIdsInDM = async (userIds: string[]) => {
 
   const conversations = await prisma.conversation.findMany({
     where: {
-      isDM: true,
+      OR: [
+        { type: "DM" },
+        { type: "GROUP_DM"}
+      ],
       users: {
         every: {
           userId: {

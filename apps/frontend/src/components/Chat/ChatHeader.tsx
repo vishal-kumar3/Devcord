@@ -4,28 +4,29 @@ import { ConversationWithMembers } from "../../types/conversation.type"
 import { User } from "@prisma/client"
 import { ChangeConversationName } from "../../actions/conversation.action"
 import { cn } from "@/lib/utils"
-import { getSocket, setSocketMetadata } from "@/lib/socket.config"
+import { setSocketMetadata } from "@/lib/socket.config"
 import { SOCKET_EVENTS, TitleChangeData } from "@devcord/node-prisma/dist/constants/socket.const"
+import { useSocket } from "@/providers/socket.provider"
+import { showConversationName } from "@/utils/conversation"
 
-// WIP: Members icon will not appear in personal chat
-// WIP: Send grp message declaring the grp name changed + by whom
-// WIP: conversationName ka kuch krna hoga like when name is changed and if it still have the name of any user then it will be removed and the user will se empty grp name.
+
+// WIP: Send system message declaring the grp name changed + by whom
 
 const ChatHeader = (
   { setShowMembersList, conversationDetails, loggedUser }
     :
-  {
-    setShowMembersList: Dispatch<SetStateAction<boolean>>,
-    conversationDetails: ConversationWithMembers,
-    loggedUser: User
-  }) => {
+    {
+      setShowMembersList: Dispatch<SetStateAction<boolean>>,
+      conversationDetails: ConversationWithMembers,
+      loggedUser: User
+    }) => {
+  let name = showConversationName(conversationDetails.name, conversationDetails.nameEdited, loggedUser.username)
+  const [inputValue, setInputValue] = useState<string>(name);
 
-  let name = conversationDetails.name?.replace(loggedUser.username as string, "") as string
-  const [inputValue, setInputValue] = useState(name);
-
-  const socket = getSocket()
+  const { socket } = useSocket()
 
   useEffect(() => {
+    if (!socket) return
     socket.connect()
     setSocketMetadata(socket, { room: conversationDetails.id })
 
@@ -55,14 +56,18 @@ const ChatHeader = (
             "border border-transparent focus:border-black bg-transparent outline-none flexibleInput min-w-[2ch] py-0.5 overflow-hidden whitespace-nowrap resize-none",
           )}
           value={inputValue}
-          disabled={conversationDetails.isPersonal}
+          disabled={conversationDetails.type === "DM"}
           onChange={(e) => setInputValue(e.target.value)}
           onBlur={async (e) => {
+            if (e.target.value === "") {
+              setInputValue(name)
+              return
+            }
             if (e.target.value === name) return
             const conversation = await ChangeConversationName(conversationDetails.id, e.target.value as string)
             if (conversation) {
               name = e.target.value
-              socket.emit(SOCKET_EVENTS.TITLE_CHANGE, {
+              socket?.emit(SOCKET_EVENTS.TITLE_CHANGE, {
                 conversationId: conversation.id,
                 title: conversation.name
               } as TitleChangeData)
@@ -85,7 +90,7 @@ const ChatHeader = (
 
 export default ChatHeader
 
-export const Icon = ({icon, action}: {icon: string, action?: () => void}) => {
+export const Icon = ({ icon, action }: { icon: string, action?: () => void }) => {
   return (
     <Image
       src={`/icons/${icon}.svg`}
