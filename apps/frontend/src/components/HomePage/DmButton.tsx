@@ -1,10 +1,9 @@
 "use client"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
-import Image from "next/image"
 import { useEffect, useState } from "react"
 import { setSocketMetadata } from "@/lib/socket.config"
-import { SOCKET_EVENTS, TitleChangeData } from "@devcord/node-prisma/dist/constants/socket.const"
+import { SOCKET_CONVERSATION, TitleChangeData } from "@devcord/node-prisma/dist/constants/socket.const"
 import { useSocket } from "@/providers/socket.provider"
 import { Conversation } from "@prisma/client"
 import { showConversationName } from "@/utils/conversation"
@@ -33,10 +32,10 @@ export const DMButton = ({ conversation, session }: DMButtonProps) => {
       setDmName(title)
     }
 
-    socket.on(SOCKET_EVENTS.TITLE_CHANGE, handleTitleChange)
+    socket.on(SOCKET_CONVERSATION.TITLE_CHANGE, handleTitleChange)
 
     return () => {
-      socket.off(SOCKET_EVENTS.TITLE_CHANGE, handleTitleChange)
+      socket.off(SOCKET_CONVERSATION.TITLE_CHANGE, handleTitleChange)
     }
   })
 

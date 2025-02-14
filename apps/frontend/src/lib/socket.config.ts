@@ -4,9 +4,6 @@ export type SocketMetadataType = {
   room?: string
 }
 
-// WIP: sdfjhdfl
-
-
 let socket: Socket
 
 export const getSocket = (userId: string): Socket => {

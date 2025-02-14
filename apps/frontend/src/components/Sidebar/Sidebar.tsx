@@ -58,7 +58,7 @@ type ProjectLinkProps = {
 
 const ProjectLink = ({ project }: { project: ProjectLinkProps }) => {
   // WIP: If project is selected then do some styling stuff
-  // do useSearchParam and make this as individual client component
+  // WIP: do useSearchParam and make this as individual client component
   return (
     <TooltipProvider delayDuration={200}>
       <Tooltip>

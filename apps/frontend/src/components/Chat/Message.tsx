@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils"
-import { MessageWithSender } from "@/types/message.types"
 import { formatDate, formatTime } from "@/utils/date_time"
+import { MessageWithSender } from "@devcord/node-prisma/dist/types/message.types";
 import Image from "next/image"
 
 
-// WIP: ensure that kafka is sending data correctly since createAt is not recognised as Date else as string which is major bug
+// WIP: implement group message logic
 
 const Message = ({ message }: { message: MessageWithSender }) => {
   const createdAtDate = new Date(message.createdAt);

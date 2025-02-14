@@ -9,6 +9,6 @@
     "declarationMap": true // Generates .d.ts.map files for better debugging
   },
   "include": [
-    "src/**/*"
+    "src/**/*.ts"
   ]
 }

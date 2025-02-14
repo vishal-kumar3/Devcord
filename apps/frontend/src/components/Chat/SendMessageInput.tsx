@@ -1,7 +1,7 @@
 import { User } from "@prisma/client"
 import { ChangeEvent, useEffect, useRef, useState } from "react"
 import { TypingEvent } from "./Chat"
-import { SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const"
+import { SOCKET_CONVERSATION } from "@devcord/node-prisma/dist/constants/socket.const"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { setSocketMetadata } from "@/lib/socket.config"
@@ -49,10 +49,10 @@ export const SendMessageInput = (
       }, 2000);
     }
 
-    socket.on(SOCKET_EVENTS.TYPING, handleTyping)
+    socket.on(SOCKET_CONVERSATION.TYPING, handleTyping)
 
     return () => {
-      socket.off(SOCKET_EVENTS.TYPING, handleTyping)
+      socket.off(SOCKET_CONVERSATION.TYPING, handleTyping)
     }
   }, [socket, conversationId])
 
@@ -62,14 +62,14 @@ export const SendMessageInput = (
     setMessage(e.target.value)
     adjustTextareaHeight()
 
-    socket.emit(SOCKET_EVENTS.TYPING, { user, conversationId, typing: true } as TypingEvent)
+    socket.emit(SOCKET_CONVERSATION.TYPING, { user, conversationId, typing: true } as TypingEvent)
 
     if (localTypingTimeoutRef.current) {
       clearTimeout(localTypingTimeoutRef.current)
     }
 
     localTypingTimeoutRef.current = setTimeout(() => {
-      socket.emit(SOCKET_EVENTS.TYPING, { user, conversationId, typing: false } as TypingEvent)
+      socket.emit(SOCKET_CONVERSATION.TYPING, { user, conversationId, typing: false } as TypingEvent)
     }, 1000)
   }
 

@@ -6,9 +6,9 @@ import { Session } from "next-auth"
 import { useEffect, useState } from "react"
 import { RequestFooter, RequestFooterAction } from "./RequestFooter"
 import Image from "next/image"
-import { SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const"
 import { useSocket } from "@/providers/socket.provider"
-import { FriendRequestWithSenderAndReceiver } from "@/types/friend.type"
+import { SOCKET_FRIEND } from "@devcord/node-prisma/dist/constants/socket.const"
+import { FriendRequestWithSenderAndReceiver } from "@devcord/node-prisma/dist/types/friend.types"
 
 
 const friendFooterActionsCreator = (receivedId: string): RequestFooterAction[] => {
@@ -22,7 +22,7 @@ const friendFooterActionsCreator = (receivedId: string): RequestFooterAction[] =
       },
       tooltipContent: "Remove Friend",
       socketEvent(socket, data) {
-        socket.emit(SOCKET_EVENTS.REMOVE_FRIEND, data)
+        socket.emit(SOCKET_FRIEND.REMOVE, data)
       },
     },
   ]
@@ -55,12 +55,12 @@ const FriendsList = ({ session }: { session: Session }) => {
       setFriendsList((prev) => prev.filter((friend) => friend.id !== data.id))
     }
 
-    socket?.on(SOCKET_EVENTS.ACCEPT_FRIEND_REQUEST, handleAcceptFriendRequest)
-    socket?.on(SOCKET_EVENTS.REMOVE_FRIEND, handleDeleteFriend)
+    socket?.on(SOCKET_FRIEND.ACCEPT, handleAcceptFriendRequest)
+    socket?.on(SOCKET_FRIEND.REMOVE, handleDeleteFriend)
 
     return () => {
-      socket?.off(SOCKET_EVENTS.ACCEPT_FRIEND_REQUEST, handleAcceptFriendRequest)
-      socket?.off(SOCKET_EVENTS.REMOVE_FRIEND, handleDeleteFriend)
+      socket?.off(SOCKET_FRIEND.ACCEPT, handleAcceptFriendRequest)
+      socket?.off(SOCKET_FRIEND.REMOVE, handleDeleteFriend)
     }
   })
 

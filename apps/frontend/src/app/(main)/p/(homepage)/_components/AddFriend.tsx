@@ -1,8 +1,7 @@
 "use client"
 import { sendFriendRequest } from "@/actions/friend.action"
-import { getSocket, setSocketMetadata } from "@/lib/socket.config"
 import { useSocket } from "@/providers/socket.provider"
-import { SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const"
+import { SOCKET_FRIEND } from "@devcord/node-prisma/dist/constants/socket.const"
 import { useState } from "react"
 
 export const AddFriend = () => {
@@ -18,11 +17,11 @@ export const AddFriend = () => {
     const { data, error } = await sendFriendRequest(username)
     if (!data) return setRequestError(error)
     if (data.status === "ACCEPTED") {
-      socket?.emit(SOCKET_EVENTS.ACCEPT_FRIEND_REQUEST, data)
+      socket?.emit(SOCKET_FRIEND.ACCEPT, data)
       return setRequestSuccess("Friend request accepted")
     }
     if (data.status === "PENDING") {
-      socket?.emit(SOCKET_EVENTS.SEND_FRIEND_REQUEST, data)
+      socket?.emit(SOCKET_FRIEND.SEND, data)
       return setRequestSuccess("Friend request sent!")
     }
     return setRequestError("Something went wrong")

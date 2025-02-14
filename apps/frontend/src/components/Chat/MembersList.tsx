@@ -1,17 +1,16 @@
-import { User } from "@prisma/client"
-import { UserConversationWithUser } from "../../types/userConversation.type"
 import Image from "next/image"
-import { AddMembers } from "../HomePage/AddMembers"
 import { useEffect, useState } from "react"
 import { setSocketMetadata } from "@/lib/socket.config"
-import { AddMembersData, RemoveMembersData, SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const"
-import { removeMemberFromConversation } from "@/actions/conversation.action"
-import { toast } from "sonner"
+import { AddMembersData, RemoveMembersData, SOCKET_CONVERSATION } from "@devcord/node-prisma/dist/constants/socket.const"
 import { useSocket } from "@/providers/socket.provider"
+import DM from "../HomePage/Dm"
+import { useSession } from "next-auth/react"
+import { UserConversationWithUser } from "@devcord/node-prisma/dist/types/userConversation.types"
+import { MembersContextMenu } from "./MemberContextMenu"
+import { Session } from "next-auth"
 
 // WIP: socket for online offline, also ui
 // WIP: Add user to conversation
-// use revalide to membersList action and also optimistic update
 
 export function MembersList(
   { membersList, conversationId }
@@ -22,15 +21,17 @@ export function MembersList(
     }
 ) {
   const [members, setMembers] = useState<UserConversationWithUser[]>(membersList)
-
+  const { data: session } = useSession()
   const { socket } = useSocket()
+  const admin = members.find((member) => member.isAdmin) ?? null
 
   useEffect(() => {
-    if(!socket) return
+    if (!socket) return
     socket.connect()
     setSocketMetadata(socket, { room: conversationId })
 
     const handleAddMembers = (data: AddMembersData) => {
+      console.log("Data received:- ", data)
       const { members } = data
       setMembers((prevMembers) => [...prevMembers, ...members])
     }
@@ -38,30 +39,31 @@ export function MembersList(
     const handleRemoveMembers = (data: RemoveMembersData) => {
       const { members } = data
       setMembers((prevMembers) =>
-        prevMembers.filter((user) => !members.includes(user.userId)) )
+        prevMembers.filter((user) => !members.includes(user.userId)))
     }
 
-    socket.on(SOCKET_EVENTS.REMOVE_MEMBERS, handleRemoveMembers)
-    socket.on(SOCKET_EVENTS.ADD_MEMBERS, handleAddMembers)
+    socket.on(SOCKET_CONVERSATION.REMOVE_MEMBERS, handleRemoveMembers)
+    socket.on(SOCKET_CONVERSATION.ADD_MEMBERS, handleAddMembers)
 
     return () => {
-      socket.off(SOCKET_EVENTS.ADD_MEMBERS, handleAddMembers)
-      socket.off(SOCKET_EVENTS.REMOVE_MEMBERS, handleRemoveMembers)
-      socket.disconnect()
+      socket.off(SOCKET_CONVERSATION.ADD_MEMBERS, handleAddMembers)
+      socket.off(SOCKET_CONVERSATION.REMOVE_MEMBERS, handleRemoveMembers)
     }
   }, [socket, conversationId])
+
+  if (!session) return null
 
   return (
     <div className="p-4">
       <div className="flex justify-between items-center">
-        <p className="font-semibold">Members - { members.length }</p>
-        <AddMembers restrictedUser={members} conversationId={conversationId} />
+        <p className="font-semibold">Members - {members.length}</p>
+        <DM addMembersData={{ restrictedUser: members, conversationId }} session={session} />
       </div>
-      <div className="overflow-y-auto h-full space-y-1">
+      <div className="overflow-y-auto h-full">
         {
           members.map((member) => {
             return (
-              <Member key={member.userId} conversationId={conversationId} user={member.user} />
+              <Member adminUser={admin} session={session} key={member.userId} conversationId={conversationId} member={member} />
             )
           })
         }
@@ -71,38 +73,24 @@ export function MembersList(
 }
 
 
-const Member = ({ user, conversationId }: { user: User, conversationId: string}) => {
-  const { socket } = useSocket()
+const Member = ({ member, conversationId, session, adminUser }: { member: UserConversationWithUser, conversationId: string, session: Session, adminUser: UserConversationWithUser | null }) => {
+  const user = member.user
   return (
-    <div className="flex gap-2 items-center hover:bg-back-three cursor-pointer p-1">
-      <div className="size-[40px rounded-full">
-        <Image
-          src={user.avatar || '/images/default-profile.png'}
-          alt={user.name || user.username || 'User'}
-          className="rounded-full overflow-hidden"
-          width={40}
-          height={40}
-        />
+    <MembersContextMenu adminUser={adminUser} key={member.userId} session={session} member={member}>
+      <div className="flex gap-2 items-center hover:bg-back-three cursor-pointer p-1">
+        <div className="size-[40px rounded-full">
+          <Image
+            src={user.avatar || '/images/default-profile.png'}
+            alt={user.name || user.username || 'User'}
+            className="rounded-full overflow-hidden"
+            width={40}
+            height={40}
+          />
+        </div>
+        <p>
+          {user.username}
+        </p>
       </div>
-      <p>
-        {user.username}
-      </p>
-      <button onClick={async () => {
-        const remainingUsers = await removeMemberFromConversation({
-          conversationId,
-          userId: user.id
-        })
-        if (!remainingUsers) {
-          toast.error("Error while removing user")
-        }
-
-        if (remainingUsers) {
-          socket?.emit(SOCKET_EVENTS.REMOVE_MEMBERS, {
-            conversationId,
-            members: [user.id]
-          })
-        }
-      }}>x</button>
-    </div>
+    </MembersContextMenu>
   )
 }

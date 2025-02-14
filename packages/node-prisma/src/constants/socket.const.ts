@@ -1,6 +1,5 @@
 import { FriendRequest, User } from "@prisma/client"
-import { UserConversationWithUser } from "../types/conversation.types"
-import { FriendRequestWithSenderAndReceiver } from "../types/friend.types"
+import { UserConversationWithUser } from "../types/userConversation.types"
 
 export type TitleChangeData = {
   conversationId: string
@@ -52,16 +51,28 @@ export const Rooms = {
 export const SOCKET_EVENTS = {
   CONNECTION: "connection",
   DISCONNECT: "disconnect",
-  MESSAGE: "message",
-  TYPING: "typing",
-  TITLE_CHANGE: "title-change",
-  ADD_MEMBERS: "add-members",
-  REMOVE_MEMBERS: "remove-members",
+}
+
+export const SOCKET_FRIEND = {
+  SEND: "send-friend-request",
+  RECEIVE: "receive-friend-request",
+  ACCEPT: "accept-friend-request",
+  DECLINE: "decline-friend-request",
+  WITHDRAW: "withdraw-friend-request",
+  REMOVE: "remove-friend-request",
+}
+
+export const SOCKET_USER_STATUS = {
+  ONLINE: "status-online",
+  OFFLINE: "status-offline",
+  IDLE: "status-idle"
+}
+
+export const SOCKET_CONVERSATION = {
+  MESSAGE: "message-conversation",
+  TYPING: "typing-conversation",
+  TITLE_CHANGE: "title-change-conversation",
+  ADD_MEMBERS: "add-members-conversation",
+  REMOVE_MEMBERS: "remove-members-conversation",
   CREATE_CONVERSATION: "create-conversation",
-  SEND_FRIEND_REQUEST: "send-friend-request",
-  RECEIVE_FRIEND_REQUEST: "receive-friend-request",
-  DECLINE_FRIEND_REQUEST: "decline-friend-request",
-  WITHDRAW_FRIEND_REQUEST: "withdraw-friend-request",
-  ACCEPT_FRIEND_REQUEST: "accept-friend-request",
-  REMOVE_FRIEND: "remove-friend",
 }

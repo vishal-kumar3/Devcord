@@ -1,16 +1,16 @@
 "use client"
 import { useEffect, useRef, useState } from "react"
-import { getSocket, setSocketMetadata } from "../../lib/socket.config"
+import { setSocketMetadata } from "../../lib/socket.config"
 import ChatHeader from "./ChatHeader"
 import Message from "./Message"
 import { MembersList } from "./MembersList"
 import { cn } from "../../lib/utils"
-import { ConversationWithMembers } from "../../types/conversation.type"
-import { MessageWithSender } from "@/types/message.types"
 import { User } from "@prisma/client"
-import { SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const.js"
+import { SOCKET_CONVERSATION } from "@devcord/node-prisma/dist/constants/socket.const.js"
 import { SendMessageInput } from "./SendMessageInput"
 import { useSocket } from "@/providers/socket.provider"
+import { ConversationWithMembers } from "@devcord/node-prisma/dist/types/conversation.types"
+import { MessageWithSender } from "@devcord/node-prisma/dist/types/message.types"
 
 export type ChatMsg = {
   msg: string
@@ -39,7 +39,6 @@ const Chat = (
       chat_message: MessageWithSender[]
     }
 ) => {
-
   const [chat, setChat] = useState<MessageWithSender[]>(chat_message || [])
   const [showMembersList, setShowMembersList] = useState(false)
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -53,7 +52,7 @@ const Chat = (
         user: user,
         conversationId,
       } as ChatMsg
-      socket?.emit(SOCKET_EVENTS.MESSAGE, send)
+      socket?.emit(SOCKET_CONVERSATION.MESSAGE, send)
     }
   }
 
@@ -67,10 +66,10 @@ const Chat = (
       setChat((prevChat) => [...prevChat, data])
     }
 
-    socket.on(SOCKET_EVENTS.MESSAGE, handleMessage)
+    socket.on(SOCKET_CONVERSATION.MESSAGE, handleMessage)
 
     return () => {
-      socket.off(SOCKET_EVENTS.MESSAGE, handleMessage)
+      socket.off(SOCKET_CONVERSATION.MESSAGE, handleMessage)
       socket.disconnect()
     }
   }, [conversationId, socket, user.id])

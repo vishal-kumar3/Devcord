@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import path from "path";
 
 export const githubApiHelper = async <T = any>(

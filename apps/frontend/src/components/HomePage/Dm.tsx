@@ -3,24 +3,38 @@ import { Session } from "next-auth"
 import { DevPopover } from "../DevPopover"
 import { FriendRequest, User } from "@prisma/client"
 import { Dispatch, SetStateAction, useEffect, useState } from "react"
-import { selectedUserType } from "./CreatePersonalConversation"
 import { Check } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog"
-import { createDMConversation, getExistingConversationByUserIds } from "@/actions/conversation.action"
-import { ConversationWithUsers } from "@/types/conversation.type"
+import { AddMembersToConversation, createDMConversation, getExistingConversationByUserIds } from "@/actions/conversation.action"
 import { useRouter } from "next/navigation"
 import { getFriendsListForDM } from "@/actions/friend.action"
 import { useSocket } from "@/providers/socket.provider"
-import { SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const"
-import { FriendRequestWithSenderAndReceiver } from "@/types/friend.type"
+import { SOCKET_CONVERSATION, SOCKET_FRIEND } from "@devcord/node-prisma/dist/constants/socket.const"
 import Link from "next/link"
 import { showConversationName } from "@/utils/conversation"
 import { useSession } from "next-auth/react"
-
+import { toast } from "sonner"
+import { UserConversationWithUser } from "@devcord/node-prisma/dist/types/userConversation.types"
+import { ConversationWithUsers } from "@devcord/node-prisma/dist/types/conversation.types"
+import { FriendRequestWithSenderAndReceiver } from "@devcord/node-prisma/dist/types/friend.types"
 
 // WIP: for now static friends filter will be used and will implement pagination later and make it client side.
 
-const DM = ({ session }: { session: Session }) => {
+export type AddMembersProps = {
+  restrictedUser: UserConversationWithUser[]
+  conversationId: string
+}
+
+export type selectedUserType = {
+  id: string
+  username: string
+}
+
+const DM = (
+  { session, addMembersData }
+    :
+    { session: Session, addMembersData?: AddMembersProps }
+) => {
   const [friends, setFriends] = useState<User[]>([])
   const [selectedUser, setSelectedUser] = useState<selectedUserType[]>([])
   const { socket } = useSocket()
@@ -49,12 +63,12 @@ const DM = ({ session }: { session: Session }) => {
       setFriends((prev) => prev.filter((friend) => friend.id !== data.receiverId))
     }
 
-    socket.on(SOCKET_EVENTS.REMOVE_FRIEND, handleDeleteFriend)
-    socket.on(SOCKET_EVENTS.ACCEPT_FRIEND_REQUEST, handleAcceptFriendRequest)
+    socket.on(SOCKET_FRIEND.REMOVE, handleDeleteFriend)
+    socket.on(SOCKET_FRIEND.ACCEPT, handleAcceptFriendRequest)
 
     return () => {
-      socket.off(SOCKET_EVENTS.ACCEPT_FRIEND_REQUEST, handleAcceptFriendRequest)
-      socket.off(SOCKET_EVENTS.REMOVE_FRIEND, handleDeleteFriend)
+      socket.off(SOCKET_FRIEND.ACCEPT, handleAcceptFriendRequest)
+      socket.off(SOCKET_FRIEND.REMOVE, handleDeleteFriend)
       setSelectedUser([])
     }
   }, [session, socket])
@@ -62,15 +76,21 @@ const DM = ({ session }: { session: Session }) => {
   return (
     <DevPopover
       title="Select Friends"
-      description={`You can add ${10 - selectedUser.length - 1} more friends.`}
+      description={`You can add ${10 - selectedUser.length - (addMembersData?.restrictedUser.length || 0) - 1} more friends.`}
       Main={
         <DMBody
           friends={friends}
           selectedUser={selectedUser}
           setSelectedUser={setSelectedUser}
+          addMembersData={addMembersData}
         />
       }
-      Footer={<DMFooter setSelectedUser={setSelectedUser} selectedUser={selectedUser} />}
+      Footer={
+        addMembersData
+          ? <AddMembersFooter conversationId={addMembersData.conversationId} />
+          :
+          <DMFooter selectedUser={selectedUser} />
+      }
     />
   )
 }
@@ -78,17 +98,16 @@ const DM = ({ session }: { session: Session }) => {
 export const DMFooter = (
   {
     selectedUser,
-    setSelectedUser
   }:
     {
       selectedUser: selectedUserType[],
-      setSelectedUser: Dispatch<SetStateAction<selectedUserType[]>>
     }) => {
   const [isDialogOpen, setDialogOpen] = useState(false)
   const [existingConversation, setExistingConversation] = useState<ConversationWithUsers[]>([])
   const router = useRouter()
-  const {data: session} = useSession()
-  if(!session) return null
+  const { data: session } = useSession()
+  const { socket } = useSocket()
+  if (!session) return null
 
   return (
     <>
@@ -98,7 +117,6 @@ export const DMFooter = (
             return
           }
           const ExistingConversation = await getExistingConversationByUserIds(selectedUser.map((user) => user.id)) ?? []
-          console.log("[Before Filter] Conversations:- ", ExistingConversation)
           if (selectedUser.length === 1 && ExistingConversation.length === 1 && ExistingConversation[0].type === 'DM') {
             return router.push(`/p/user/${ExistingConversation[0].id}`)
           }
@@ -137,7 +155,7 @@ export const DMFooter = (
                         onClick={() => {
                           router.push(`/p/user/${conversation.id}`)
                         }}
-                        className="bg-back-two rounded-md"
+                        className="bg-back-two flex-1 rounded-md"
                       >
                         {showConversationName(conversation.name as string, conversation.nameEdited, session?.user.username)}
                       </Link>
@@ -148,7 +166,7 @@ export const DMFooter = (
             </div>
             <DialogFooter className="flex justify-around p-2">
               <button onClick={() => setDialogOpen(false)} className="flex-1 p-2 hover:underline bg-back-two hover:bg-back-three">Cancel</button>
-              <button onClick={async() => {
+              <button onClick={async () => {
                 const createdConversation = await createDMConversation({ user: selectedUser })
                 if (createdConversation) {
                   // setDialogOpen(false)
@@ -165,14 +183,14 @@ export const DMFooter = (
 }
 
 export const DMBody = (
-  { update = false,
+  { addMembersData,
     friends,
     selectedUser,
     setSelectedUser
   }
     :
     {
-      update?: boolean,
+      addMembersData?: AddMembersProps,
       friends: User[],
       selectedUser: selectedUserType[],
       setSelectedUser: Dispatch<SetStateAction<selectedUserType[]>>
@@ -180,6 +198,12 @@ export const DMBody = (
 ) => {
 
   const [searchUsername, setSearchUsername] = useState<string>("")
+
+  if (addMembersData) {
+    friends = friends.filter((friend) => {
+      return !addMembersData.restrictedUser.some((restrictedUser) => restrictedUser.userId === friend.id)
+    })
+  }
 
   const toggleUser = (user: selectedUserType) => {
     setSelectedUser((prev) =>
@@ -190,7 +214,7 @@ export const DMBody = (
 
   return (
     <div>
-      <div className="flex gap-2 py-3">
+      <div className="flex gap-2 py-3 items-center">
         <div className="bg-back-one flex flex-1 flex-row flex-wrap gap-[1px] p-[4px]">
           {
             selectedUser.map((user) => {
@@ -211,9 +235,8 @@ export const DMBody = (
           }
           <InputBackspace setSelectedUser={setSelectedUser} searchUsername={searchUsername} setSearchUsername={setSearchUsername} />
         </div>
-        {update && <button className="bg-blue-400 px-3">Add</button>}
+        {addMembersData && <AddMembers setSelectedUser={setSelectedUser} selectedUser={selectedUser} restrictedUser={addMembersData.restrictedUser} conversationId={addMembersData.conversationId} />}
       </div>
-
       <div>
         {friends.map((user) => {
           if (searchUsername && !user.username?.includes(searchUsername)) return null
@@ -241,6 +264,128 @@ export const DMBody = (
           )
         })}
       </div>
+    </div>
+  )
+}
+
+export const AddMembers = (
+  { selectedUser, setSelectedUser, restrictedUser, conversationId }
+    :
+    { selectedUser: selectedUserType[], setSelectedUser: Dispatch<SetStateAction<selectedUserType[]>>, restrictedUser: UserConversationWithUser[], conversationId: string }
+) => {
+  const [isDialogOpen, setDialogOpen] = useState(false)
+  const [existingConversation, setExistingConversation] = useState<ConversationWithUsers[]>([])
+  const router = useRouter()
+  const { data: session } = useSession()
+  const { socket } = useSocket()
+  if (!session) return null
+  restrictedUser = restrictedUser.filter((user) => user.userId !== session.user.id)
+
+  return (
+    <>
+      <button
+        className="bg-blue-400 hover:bg-blue-500 py-1 px-3"
+        onClick={async () => {
+          if (selectedUser.length === 0) {
+            return
+          }
+          const ExistingConversation = await getExistingConversationByUserIds([...selectedUser.map((user) => user.id), ...restrictedUser.map((user) => user.userId)]) ?? []
+
+          if (ExistingConversation?.length) {
+            setExistingConversation(ExistingConversation)
+            return setDialogOpen(true)
+          }
+
+          const { created, data, error } = await AddMembersToConversation({ conversationId, users: selectedUser })
+
+          if (created) {
+            setSelectedUser([])
+            router.push(`/p/user/${created.id}`)
+            return toast.success("Selected members added!")
+          }
+
+          if (!data) {
+            return toast.error(error)
+          }
+
+          setSelectedUser([])
+          socket?.emit(SOCKET_CONVERSATION.ADD_MEMBERS, { conversationId, members: data })
+          toast.success("Members added successfully")
+        }}
+      >
+        Add
+      </button>
+      {isDialogOpen &&
+        <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="text-xl">Confirm New Group</DialogTitle>
+              <DialogDescription>
+                You already have a group with these people! Are you sure you want to create a new one?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="px-2">
+              <div className="text-base font-bold">EXISTING GROUP</div>
+              <div className="flex flex-col gap-2">
+                {existingConversation.map((conversation) => {
+                  return (
+                    <div key={conversation.id} className="flex items-center p-2 bg-back-two gap-2 line-clamp-1">
+                      <div className="size-7 bg-black rounded-full aspect-square"></div>
+                      <Link
+                        href={'/p/user/' + conversation.id}
+                        key={conversation.id}
+                        onClick={() => {
+                          router.push(`/p/user/${conversation.id}`)
+                        }}
+                        className="bg-back-two flex-1 rounded-md"
+                      >
+                        {showConversationName(conversation.name as string, conversation.nameEdited, session?.user.username)}
+                      </Link>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+            <DialogFooter className="flex justify-around p-2">
+              <button onClick={() => setDialogOpen(false)} className="flex-1 p-2 hover:underline bg-back-two hover:bg-back-three">Cancel</button>
+              <button onClick={async () => {
+                const { created, data, error } = await AddMembersToConversation({ conversationId, users: selectedUser })
+
+                if (created) {
+                  setSelectedUser([])
+                  router.push(`/p/user/${created.id}`)
+                  return toast.success("Selected members added!")
+                }
+
+                if (!data) {
+                  return toast.error(error)
+                }
+
+                setSelectedUser([])
+                socket?.emit(SOCKET_CONVERSATION.ADD_MEMBERS, { conversationId, members: data })
+                toast.success("Selected members added!")
+                return setDialogOpen(false)
+              }} className="flex-1 p-2 hover:bg-blue-600 bg-blue-500">Add Members</button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      }
+    </>
+  )
+}
+
+// WIP: Implement user invite logic
+export const AddMembersFooter = ({ conversationId }: { conversationId: string }) => {
+  return (
+    <div className="flex gap-2">
+      <input
+        type="text"
+        placeholder="Create Invite Link"
+        // value={"Create Invite Link"}
+        disabled
+        className="flex-1 p-1 px-2 placeholder:text-white/50"
+      />
+      <button className="bg-blue-400 px-3">Create</button>
     </div>
   )
 }
@@ -282,6 +427,5 @@ export const InputBackspace = (
     />
   )
 }
-
 
 export default DM

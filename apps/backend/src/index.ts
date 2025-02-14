@@ -1,4 +1,4 @@
-import { app, server, io } from "./app.js";
+import { server, io } from "./app.js";
 
 import dotenv from 'dotenv'
 import { setupSocket } from "./socket.js";

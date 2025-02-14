@@ -1,6 +1,5 @@
-import { MessageWithSender } from "@/types/message.types"
 import { prisma } from "@devcord/node-prisma"
-
+import { MessageWithSender } from "@devcord/node-prisma/dist/types/message.types"
 
 export const getMessageByConversationId = async (conversationId: string) => {
 

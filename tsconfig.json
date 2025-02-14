@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@devcord/node-prisma/*": [
+        "packages/node-prisma/src/*"
+      ]
+    }
+  }
+}

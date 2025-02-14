@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Input } from "../ui/input"
-import { getConversationByUserId } from "../../actions/conversation.action"
+import { getConversationByUserId } from "@/actions/conversation.action"
 import { DMButton } from "./DmButton"
 import { getAuthUser } from "@/actions/auth.action"
 import { ExtendedUser } from "@/next-auth"

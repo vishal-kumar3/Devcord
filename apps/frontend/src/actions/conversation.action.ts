@@ -2,49 +2,53 @@
 
 import { prisma } from '@devcord/node-prisma';
 import { getLoggedInUser } from "./user.action"
-import { selectedUserType } from '@/components/HomePage/CreatePersonalConversation';
+import { selectedUserType } from '@/components/HomePage/Dm';
 import { getAuthUser } from './auth.action';
+import { auth } from '@/auth';
 
 
-export const createDMConversation = async ({ user }: { user: selectedUserType[] }) => {
-  if (user.length == 0 || user.length > 10) return null
-
-  const session = await getAuthUser()
+export const createOrGetDMConversation = async (userId: string, username?: string) => {
+  if (!userId) return null
+  const session = await auth()
   if (!session) return null
 
-  user.push({
-    id: session?.user.id,
-    username: session?.user.username as string
-  })
-
-  const isPersonal = user.length == 2
-  const convUser = user.map((user) => {
-    return { userId: user.id }
-  })
-
-
-  const name = user.map((user) => user.username).join(', ')
-
-  const conversation = await prisma.conversation.create({
-    data: {
-      name: name,
-      type: isPersonal ? 'DM' : 'GROUP_DM',
+  const existingConversation = await prisma.conversation.findFirst({
+    where: {
       users: {
-        createMany: {
-          data: convUser
+        every: {
+          userId: {
+            in: [userId, session.user.id]
+          }
         }
       },
-      admins: {
-        connect: {
-          id: session.user.id
+      type: 'DM'
+    }
+  }).catch(err => null)
+
+  if (existingConversation) return existingConversation
+
+  if (!username) {
+    const user = await prisma.user.findUnique({ where: { id: userId } }).catch(err => null)
+    if (!user) return null
+    username = user?.username
+  }
+
+  const createConversation = await prisma.conversation.create({
+    data: {
+      name: session.user.username + ', ' + username,
+      type: 'DM',
+      users: {
+        createMany: {
+          data: [
+            { userId: userId, isAdmin: false },
+            { userId: session.user.id, isAdmin: false }
+          ]
         }
       }
     }
-  }).catch(err => {
-    return null
   })
 
-  return conversation
+  return createConversation
 }
 
 export const getExistingConversationByUserIds = async (userIds: string[]) => {
@@ -67,17 +71,13 @@ export const getExistingConversationByUserIds = async (userIds: string[]) => {
     }
   });
 
-  console.log("[Before Filter] Conversations:- ", conversations)
-
   // Filter out conversations that have more or fewer users than provided userIds
   return conversations.filter(conversation =>
     conversation.users.length === userIds.length
   );
 }
 
-// ! Older version of the code
-
-export const createDmConversation = async ({ user }: { user: selectedUserType[] }) => {
+export const createDMConversation = async ({ user }: { user: selectedUserType[] }) => {
 
   if (user.length == 0 || user.length > 10) return null
 
@@ -89,30 +89,23 @@ export const createDmConversation = async ({ user }: { user: selectedUserType[] 
     username: loggedInUser?.username as string
   })
 
-  const isPersonal = user.length == 2
-  let name = ''
-  const convUser = user.map((user) => {
-    name += user.username + ' ';
-    return { userId: user.id }
-  })
+  const isPersonal = user.length <= 2
 
-  name.trim()
-  name.replace(' ', ', ')
+  const name: string[] = []
+  const convUser = user.map((user) => {
+    name.push(user.username)
+    return { userId: user.id, isAdmin: loggedInUser.id === user.id }
+  })
 
   const conversation = await prisma.conversation.create({
     data: {
-      name: name,
+      name: name.join(', '),
       type: isPersonal ? 'DM' : 'GROUP_DM',
       users: {
         createMany: {
           data: convUser
         }
       },
-      admins: {
-        connect: {
-          id: loggedInUser.id
-        }
-      }
     }
   }).catch(err => {
     console.error("Error while creating conversation:- ", err.stack)
@@ -128,7 +121,7 @@ export const getConversationByUserId = async (userId: string) => {
     userId = user?.id as string
   }
 
-  if(!userId) return null
+  if (!userId) return null
 
   const conversation = await prisma.conversation.findMany({
     where: {
@@ -147,7 +140,7 @@ export const getConversationByUserId = async (userId: string) => {
 }
 
 export const getConversationById = async (conversationId: string) => {
-  if(!conversationId) return null
+  if (!conversationId) return null
 
   const conversation = await prisma.conversation.findUnique({
     where: {
@@ -181,53 +174,84 @@ export const ChangeConversationName = async (conversationId: string, name: strin
 }
 
 export const AddMembersToConversation = async (
-  { conversationId, users, totalMembers }
+  { conversationId, users }
     :
-    { conversationId: string, users: selectedUserType[], totalMembers: number }
+    { conversationId: string, users: selectedUserType[] }
 ) => {
+  if (!conversationId || users.length == 0) return { created: null, data: null, error: "Invalid data" }
 
-  if (!conversationId || users.length == 0) return null
   const loggedInUser = await getLoggedInUser()
-  if (!loggedInUser) return null
+  if (!loggedInUser) return { created: null, data: null, error: "User not authorised" }
 
-  // WIP: Check for authority if they can add members or not
-  const conversation = await prisma.conversation.update({
+  const conversation = await prisma.conversation.findUnique({
     where: {
       id: conversationId
+    },
+    select: {
+      id: true,
+      type: true,
+      users: {
+        select: {
+          user: {
+            select: {
+              id: true,
+              username: true
+            }
+          }
+        }
+      }
+    }
+  }).catch(err => null)
+
+  if (!conversation) return { created: null, data: null, error: "Conversation not found" }
+
+  if (conversation.type === 'DM') {
+    const members = conversation.users
+      .filter(user => user.user.id !== loggedInUser.id)
+      .map(user => ({
+        id: user.user.id,
+        username: user.user.username
+      }));
+    const newConversation = await createDMConversation({user: [...users,...members]})
+    if (!newConversation) return { created: null, data: null, error: "Error while creating conversation" }
+    return { created: newConversation, data: null, error: null }
+  }
+
+  // WIP: Check for authority if they can add members or not
+  const updatedConversation = await prisma.conversation.update({
+    where: {
+      id: conversationId,
     },
     data: {
       users: {
         createMany: {
           data: users.map((user) => {
-            return { userId: user.id }
+            return { userId: user.id, isAdmin: loggedInUser.id === user.id }
           })
         }
       },
-      type: totalMembers > 2 ? 'GROUP_DM' : 'DM'
     },
     include: {
-      users: true
+      users: {
+        include: {
+          user: true
+        }
+      }
     }
   }).catch(err => {
     console.error("Error while fetching conversation", err.stack)
     return null
   })
 
-  if (!conversation) return null
+  if (!updatedConversation) return { created: null, data: null, error: "Error while adding user" }
 
-  const addedUser = await prisma.userConversation.findMany({
-    where: {
-      conversationId: conversationId,
-      userId: {
-        in: users.map((user) => user.id)
-      }
-    },
-    include: {
-      user: true
-    }
+  const addedUser = updatedConversation.users.filter((user) => {
+    return users.some((u) => u.id == user.userId)
   })
 
-  return addedUser
+  updatedConversation.users = addedUser
+
+  return { created: null, data: updatedConversation.users, error: null }
 }
 
 export const removeMemberFromConversation = async (
@@ -235,14 +259,22 @@ export const removeMemberFromConversation = async (
     :
     { conversationId: string, userId: string }
 ) => {
-  if (!conversationId || !userId) return null
+  if (!conversationId || !userId) return { data: null, error: "Invalid data" }
 
   const loggedInUser = await getLoggedInUser()
-  if (!loggedInUser) return null
+  if (!loggedInUser) return { data: null, error: "User not authorised" }
+
+  if (loggedInUser.id === userId) return { data: null, error: "You can't remove yourself" }
 
   const conversation = await prisma.conversation.update({
     where: {
-      id: conversationId
+      id: conversationId,
+      users: {
+        some: {
+          userId: loggedInUser.id,
+          isAdmin: true
+        }
+      }
     },
     data: {
       users: {
@@ -255,15 +287,16 @@ export const removeMemberFromConversation = async (
       users: true
     }
   }).catch(err => {
-    console.error("Error while removing member from conversation", err.stack)
     return null
   })
 
-  return conversation?.users
+  if (!conversation) return { data: null, error: "Error while removing user" }
+
+  return { data: conversation.users, error: null }
 }
 
 export const getConversationAndUserById = async (conversationId: string) => {
-  if (!conversationId) return {error: "Invalid conversation id", data: null}
+  if (!conversationId) return { error: "Invalid conversation id", data: null }
 
   const conversation = await prisma.conversation.findUnique({
     where: {
@@ -278,10 +311,10 @@ export const getConversationAndUserById = async (conversationId: string) => {
     }
   }).catch(err => {
     console.error("Error while fetching conversation by id", err.stack)
-    return {error: "Error while fetching conversation by id", data: null}
+    return { error: "Error while fetching conversation by id", data: null }
   })
 
-  return {data: {conversation}, error: null}
+  return { data: { conversation }, error: null }
 }
 
 export const getConversationByUserIdsInDM = async (userIds: string[]) => {
@@ -295,7 +328,7 @@ export const getConversationByUserIdsInDM = async (userIds: string[]) => {
     where: {
       OR: [
         { type: "DM" },
-        { type: "GROUP_DM"}
+        { type: "GROUP_DM" }
       ],
       users: {
         every: {

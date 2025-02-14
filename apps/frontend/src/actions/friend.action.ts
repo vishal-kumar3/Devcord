@@ -2,7 +2,7 @@
 
 import { prisma } from "@devcord/node-prisma"
 import { getAuthUser } from "./auth.action"
-import { FriendRequestStatus, User } from "@prisma/client"
+import { FriendRequestStatus } from "@prisma/client"
 import { Session } from "next-auth"
 
 

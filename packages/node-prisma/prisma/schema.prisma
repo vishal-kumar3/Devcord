@@ -23,7 +23,6 @@ model User {
 
   role UserRole @default(USER)
 
-  dmAdmin                Conversation[]
   accounts               Account[]
   ownedProjects          Project[]          @relation("ProjectOwner")
   memberships            ProjectMember[]
@@ -238,7 +237,6 @@ model Conversation {
   nameEdited DateTime?
 
   // For DM and GROUP_DM, these arrays represent the admins and participants.
-  admins User[]
   users  UserConversation[]
 
   messages Message[]
@@ -264,6 +262,7 @@ enum ConversationType {
 model UserConversation {
   userId         String
   conversationId String
+  isAdmin        Boolean @default(false)
   joinedAt       DateTime @default(now())
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)

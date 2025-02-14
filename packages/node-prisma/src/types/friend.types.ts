@@ -8,3 +8,17 @@ export type FriendRequestWithSenderAndReceiver = Prisma.FriendRequestGetPayload<
     receiver: true
   }
 }>
+
+export type FriendRequestSentWithReceiver = Prisma.FriendRequestGetPayload<{
+  include: {
+    receiver: true
+  }
+}>
+
+
+
+export type FriendRequestReceiveWithSender = Prisma.FriendRequestGetPayload<{
+  include: {
+    requester: true
+  }
+}>

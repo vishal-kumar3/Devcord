@@ -1,14 +1,14 @@
 "use client"
 import { getReceivedRequestById, getReceivedRequests, getSentRequests, updateReceivedFriendRequest, updateSentFriendRequest } from "@/actions/friend.action"
 import InlineUserCard from "@/components/UserCard/inline-user-card"
-import { FriendRequestReceiveWithSender, FriendRequestSentWithReceiver, FriendRequestWithSenderAndReceiver } from "@/types/friend.type"
 import { Session } from "next-auth"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { RequestFooter, RequestFooterAction } from "./RequestFooter"
 import { useSocket } from "@/providers/socket.provider"
-import { SOCKET_EVENTS } from "@devcord/node-prisma/dist/constants/socket.const"
+import { SOCKET_EVENTS, SOCKET_FRIEND } from "@devcord/node-prisma/dist/constants/socket.const"
 import { FriendRequest } from "@prisma/client"
+import { FriendRequestReceiveWithSender, FriendRequestSentWithReceiver, FriendRequestWithSenderAndReceiver } from "@devcord/node-prisma/dist/types/friend.types"
 
 
 const receivedRequestFooterActionsCreator = (requesterId: string): RequestFooterAction[] => {
@@ -23,7 +23,7 @@ const receivedRequestFooterActionsCreator = (requesterId: string): RequestFooter
       tooltipContent: "Accept",
       friendId: requesterId,
       socketEvent(socket, data) {
-        socket.emit(SOCKET_EVENTS.ACCEPT_FRIEND_REQUEST, data)
+        socket.emit(SOCKET_FRIEND.ACCEPT, data)
       },
     },
     {
@@ -36,7 +36,7 @@ const receivedRequestFooterActionsCreator = (requesterId: string): RequestFooter
       tooltipContent: "Decline",
       friendId: requesterId,
       socketEvent(socket, data) {
-        socket.emit(SOCKET_EVENTS.DECLINE_FRIEND_REQUEST, data)
+        socket.emit(SOCKET_FRIEND.DECLINE, data)
       },
     },
   ]
@@ -54,7 +54,7 @@ const sentRequestFooterActionsCreator = (receivedId: string): RequestFooterActio
       tooltipContent: "Withdraw",
       friendId: receivedId,
       socketEvent(socket, data) {
-        socket.emit(SOCKET_EVENTS.WITHDRAW_FRIEND_REQUEST, data)
+        socket.emit(SOCKET_FRIEND.WITHDRAW, data)
       },
     },
   ]
@@ -100,9 +100,9 @@ export const PendingRequest = ({ session }: { session: Session }) => {
       setReceivedRequests((prev) => prev.filter((request) => request.id !== data.id))
     }
 
-    socket.on(SOCKET_EVENTS.DECLINE_FRIEND_REQUEST, handleDeclineRequest)
+    socket.on(SOCKET_FRIEND.DECLINE, handleDeclineRequest)
     socket.on(SOCKET_EVENTS.RECEIVE_FRIEND_REQUEST, handleReceivedRequest)
-    socket.on(SOCKET_EVENTS.WITHDRAW_FRIEND_REQUEST, handleWithdrawRequest)
+    socket.on(SOCKET_FRIEND.WITHDRAW, handleWithdrawRequest)
 
     return () => {
       socket.off(SOCKET_EVENTS.RECEIVE_FRIEND_REQUEST, handleReceivedRequest)
