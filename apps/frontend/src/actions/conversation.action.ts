@@ -8,9 +8,9 @@ import { auth } from '@/auth';
 
 
 export const createOrGetDMConversation = async (userId: string, username?: string) => {
-  if (!userId) return null
+  if (!userId) return { created: null, data: null, error: "Invalid data" }
   const session = await auth()
-  if (!session) return null
+  if (!session) return { created: null, data: null, error: "User not authorised" }
 
   const existingConversation = await prisma.conversation.findFirst({
     where: {
@@ -25,11 +25,11 @@ export const createOrGetDMConversation = async (userId: string, username?: strin
     }
   }).catch(err => null)
 
-  if (existingConversation) return existingConversation
+  if (existingConversation) return { created: null, data: existingConversation, error: null }
 
   if (!username) {
     const user = await prisma.user.findUnique({ where: { id: userId } }).catch(err => null)
-    if (!user) return null
+    if (!user) return { created: null, data: null, error: "User not found" }
     username = user?.username
   }
 
@@ -45,10 +45,15 @@ export const createOrGetDMConversation = async (userId: string, username?: strin
           ]
         }
       }
+    },
+    include: {
+      users: true
     }
-  })
+  }).catch(err => null)
 
-  return createConversation
+  if (!createConversation) return { created: null, data: null, error: "Error while creating conversation" }
+
+  return { created: createConversation, data: null, error: null }
 }
 
 export const getExistingConversationByUserIds = async (userIds: string[]) => {
@@ -106,6 +111,9 @@ export const createDMConversation = async ({ user }: { user: selectedUserType[] 
           data: convUser
         }
       },
+    },
+    include: {
+      users: true
     }
   }).catch(err => {
     console.error("Error while creating conversation:- ", err.stack)

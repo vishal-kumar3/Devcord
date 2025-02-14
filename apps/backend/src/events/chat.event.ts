@@ -2,6 +2,8 @@ import { AddMembersData, createDmConversationData, MessageData, RemoveMembersDat
 import { CustomSocket } from "../socket.js";
 import { Server } from "socket.io";
 import { produceMessage } from "../services/kafka.service.js";
+import { ConversationWithUsers } from "@devcord/node-prisma/dist/types/userConversation.types.js";
+import { Conversation } from "@prisma/client";
 
 
 export const handleConversationEvents = (socket: CustomSocket, io: Server) => {
@@ -31,7 +33,8 @@ export const handleConversationEvents = (socket: CustomSocket, io: Server) => {
   });
 
   // Create conversation
-  socket.on(SOCKET_CONVERSATION.CREATE_CONVERSATION, (data: createDmConversationData) => {
-    socket.to(data.userIds).emit(SOCKET_CONVERSATION.CREATE_CONVERSATION, data);
+  socket.on(SOCKET_CONVERSATION.CREATE_CONVERSATION, (data: ConversationWithUsers) => {
+    const sendData: Conversation = data
+    io.to(data.users.map(user => user.userId)).emit(SOCKET_CONVERSATION.CREATE_CONVERSATION, sendData);
   });
 }

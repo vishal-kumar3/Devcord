@@ -7,13 +7,14 @@ import { ExtendedUser } from "@/next-auth"
 import DM from "./Dm"
 import Link from "next/link"
 import Image from "next/image"
+import { ConversationList } from "./ConversationList"
 
 
 const HomeSidebar = async () => {
   const session = await getAuthUser()
 
   if (!session) return null
-  const conversations = await getConversationByUserId(session.user.id)
+  const conversations = await getConversationByUserId(session.user.id) ?? []
 
   return (
     <div className="relative bg-back-two h-screen">
@@ -33,17 +34,7 @@ const HomeSidebar = async () => {
             <p className="font-semibold">DIRECT MESSAGE</p>
             <DM session={session} />
           </div>
-          {
-            conversations?.map((conversation) => {
-              return (
-                <DMButton
-                  conversation={conversation}
-                  key={conversation.id}
-                  session={session}
-                />
-              )
-            })
-          }
+          <ConversationList session={session} conversations={conversations} />
         </div>
       </div>
       {/* My Account */}

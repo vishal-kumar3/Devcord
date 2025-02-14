@@ -1,12 +1,12 @@
 import { SOCKET_CONVERSATION } from "@devcord/node-prisma/dist/constants/socket.const";
+import { ConversationWithUsers } from "@devcord/node-prisma/dist/types/userConversation.types";
 import { Socket } from "socket.io-client";
 
-export const CreateConversationType = {
-  users: 
-}
-
-export const CreateConversationEvent = (socket: Socket | null, ) => {
+export const CreateConversationEvent = (
+  socket: Socket | null,
+  data: ConversationWithUsers
+) => {
   if (!socket) return
-
-  socket.emit(SOCKET_CONVERSATION.CREATE_CONVERSATION, {})
+  console.log("CreateConversationEvent", data)
+  socket.emit(SOCKET_CONVERSATION.CREATE_CONVERSATION, data)
 }

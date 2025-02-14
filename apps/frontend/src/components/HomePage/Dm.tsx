@@ -17,6 +17,7 @@ import { toast } from "sonner"
 import { UserConversationWithUser } from "@devcord/node-prisma/dist/types/userConversation.types"
 import { ConversationWithUsers } from "@devcord/node-prisma/dist/types/conversation.types"
 import { FriendRequestWithSenderAndReceiver } from "@devcord/node-prisma/dist/types/friend.types"
+import { CreateConversationEvent } from "@/events/socket/conversation.socket"
 
 // WIP: for now static friends filter will be used and will implement pagination later and make it client side.
 
@@ -128,6 +129,7 @@ export const DMFooter = (
 
           const createdConversation = await createDMConversation({ user: selectedUser })
           if (createdConversation) {
+            CreateConversationEvent(socket, createdConversation)
             return router.push(`/p/user/${createdConversation.id}`)
           }
         }}
@@ -169,7 +171,7 @@ export const DMFooter = (
               <button onClick={async () => {
                 const createdConversation = await createDMConversation({ user: selectedUser })
                 if (createdConversation) {
-                  // setDialogOpen(false)
+                  CreateConversationEvent(socket, createdConversation)
                   return router.push(`/p/user/${createdConversation.id}`)
                 }
               }} className="flex-1 p-2 hover:bg-blue-600 bg-blue-500">Create Group</button>
@@ -300,6 +302,7 @@ export const AddMembers = (
 
           if (created) {
             setSelectedUser([])
+            CreateConversationEvent(socket, created)
             router.push(`/p/user/${created.id}`)
             return toast.success("Selected members added!")
           }
@@ -353,6 +356,7 @@ export const AddMembers = (
 
                 if (created) {
                   setSelectedUser([])
+                  CreateConversationEvent(socket, created)
                   router.push(`/p/user/${created.id}`)
                   return toast.success("Selected members added!")
                 }

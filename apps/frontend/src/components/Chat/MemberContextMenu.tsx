@@ -6,6 +6,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
+import { CreateConversationEvent } from "@/events/socket/conversation.socket"
 import { useSocket } from "@/providers/socket.provider"
 import { SOCKET_CONVERSATION } from "@devcord/node-prisma/dist/constants/socket.const"
 import { UserConversationWithUser } from "@devcord/node-prisma/dist/types/userConversation.types"
@@ -36,9 +37,13 @@ export function MembersContextMenu({ children, member, session, adminUser }: { c
               <ContextMenuItem
                 inset
                 onClick={async () => {
-                  const conversation = await createOrGetDMConversation(member.userId, member.user.username)
-                  if (!conversation) return toast.error("Failed to create conversation")
-                  return router.push(`/p/user/${conversation.id}`)
+                  const {created, data, error} = await createOrGetDMConversation(member.userId, member.user.username)
+                  if (error) return toast.error(error)
+                  if(data) return router.push(`/p/user/${data.id}`)
+                  if (created) {
+                    CreateConversationEvent(socket, created)
+                    router.push(`/p/user/${created.id}`)
+                  }
                 }}
               >
                 Message
