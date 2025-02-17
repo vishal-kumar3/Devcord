@@ -93,7 +93,7 @@ const Chat = (
     return () => {
       socket.off(SOCKET_CONVERSATION.MESSAGE, handleMessage)
       socket.off(SOCKET_CONVERSATION.REMOVE_MEMBERS, handleRemoveMembers)
-      socket.disconnect()
+      // socket.disconnect()
     }
   }, [conversation.id, socket, user.id, router])
 

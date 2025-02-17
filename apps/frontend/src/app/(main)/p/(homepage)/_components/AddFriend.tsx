@@ -13,14 +13,20 @@ export const AddFriend = () => {
   const handlSendFriendRequest = async (username: string) => {
     setRequestError(null)
     setRequestSuccess(null)
+
     if (!username || username == "" || username.trim() == "") return setRequestError("Please enter a valid username")
+
     const { data, error } = await sendFriendRequest(username)
+
     if (!data) return setRequestError(error)
+    socket?.connect()
     if (data.status === "ACCEPTED") {
       socket?.emit(SOCKET_FRIEND.ACCEPT, data)
       return setRequestSuccess("Friend request accepted")
     }
+
     if (data.status === "PENDING") {
+      console.log("SEND FRIEND REQUEST", data, socket)
       socket?.emit(SOCKET_FRIEND.SEND, data)
       return setRequestSuccess("Friend request sent!")
     }

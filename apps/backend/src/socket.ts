@@ -20,21 +20,13 @@ export const setupSocket = (io: Server) => {
       return next(new Error("Missing userId"));
     }
 
-    // if (!room) {
-      //   return next(new Error("Invalid room"));
-    // }
-    // socket.room = room;
     socket.userId = userId;
     return next();
   });
 
   io.on(SOCKET_EVENTS.CONNECTION, (socket: CustomSocket) => {
-    // if (socket.room) {
-    //   console.log("Joined room:- ", socket.room);
-    //   socket.join(socket.room);
-    //   consumeMessage("chat", socket.room, socket);
-    // }
     socket.join(socket.userId);
+
     // socket.join(Rooms.USER_STATUS)
 
     handleFriendEvents(socket, io);

@@ -5,9 +5,6 @@ import { getAuthUser } from "./auth.action"
 import { FriendRequestStatus } from "@prisma/client"
 import { Session } from "next-auth"
 
-
-
-
 export const sendFriendRequest = async (username: string) => {
   const session = await getAuthUser()
 
@@ -24,7 +21,7 @@ export const sendFriendRequest = async (username: string) => {
 
   if (!friendExists) return { data: null, error: `Please check the username: ${username}` }
 
-  if(friendExists.id === session.user.id) return { data: null, error: "You can't send request to yourself" }
+  if (friendExists.id === session.user.id) return { data: null, error: "You can't send request to yourself" }
 
   const reverseRequestExists = await prisma.friendRequest.update({
     where: {
@@ -125,6 +122,22 @@ export const getReceivedRequests = async (session: Session) => {
   return { data: requests, error: null }
 }
 
+export const getSenderAndReceiverById = async (requestId: string) => {
+  if (!requestId) return { data: null, error: "Invalid Request" }
+
+  const request = await prisma.friendRequest.findUnique({
+    where: { id: requestId },
+    include: {
+      requester: true,
+      receiver: true,
+    }
+  }).catch(e => null)
+
+  if (!request) return { data: null, error: "Request not found" }
+
+  return { data: request, error: null }
+}
+
 export const deleteAcceptedRequests = async ({ friendId, status }: { friendId: string, status: FriendRequestStatus }) => {
   const session = await getAuthUser()
 
@@ -154,7 +167,7 @@ export const deleteAcceptedRequests = async ({ friendId, status }: { friendId: s
     }
   })
 
-  if(!deletedRequest) return { data: null, error: "Failed to delete request" }
+  if (!deletedRequest) return { data: null, error: "Failed to delete request" }
 
   return { data: deletedRequest, error: null }
 }
@@ -258,9 +271,9 @@ export const getFriendsList = async (session?: Session) => {
 
   const filteredFriends = friends.map((friendRequest) => {
     if (friendRequest.receiverId === session.user.id) {
-      return {id:friendRequest.id, user:friendRequest.requester};
+      return { id: friendRequest.id, user: friendRequest.requester };
     } else {
-      return {id:friendRequest.id, user:friendRequest.receiver};
+      return { id: friendRequest.id, user: friendRequest.receiver };
     }
   }).filter(Boolean);
 

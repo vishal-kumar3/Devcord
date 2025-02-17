@@ -1,5 +1,5 @@
 "use client"
-import { getFriendsList, deleteAcceptedRequests } from "@/actions/friend.action"
+import { getFriendsList, deleteAcceptedRequests, getSenderAndReceiverById } from "@/actions/friend.action"
 import InlineUserCard from "@/components/UserCard/inline-user-card"
 import { FriendRequest, User } from "@prisma/client"
 import { Session } from "next-auth"
@@ -44,11 +44,15 @@ const FriendsList = ({ session }: { session: Session }) => {
 
   useEffect(() => {
 
-    const handleAcceptFriendRequest = (data: FriendRequestWithSenderAndReceiver) => {
+    const handleAcceptFriendRequest = async (data: FriendRequestWithSenderAndReceiver) => {
+      const { data: request, error } = await getSenderAndReceiverById(data.id)
+
+      if (!request || error) return
+
       if (data.requesterId === session.user.id) {
-        return setFriendsList((prev) => [...prev, { id: data.id, user: data.receiver }])
+        return setFriendsList((prev) => [...prev, { id: request.id, user: request.receiver }])
       }
-      return setFriendsList((prev) => [...prev, { id: data.id, user: data.requester }])
+      return setFriendsList((prev) => [...prev, { id: request.id, user: request.requester }])
     }
 
     const handleDeleteFriend = (data: FriendRequest) => {
