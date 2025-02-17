@@ -2,7 +2,7 @@ import Image from "next/image"
 import { Dispatch, SetStateAction, useEffect, useState } from "react"
 import { User } from "@prisma/client"
 import { ChangeConversationName } from "../../actions/conversation.action"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/cn"
 import { setSocketMetadata } from "@/lib/socket.config"
 import { SOCKET_CONVERSATION, TitleChangeData } from "@devcord/node-prisma/dist/constants/socket.const"
 import { useSocket } from "@/providers/socket.provider"
@@ -40,7 +40,6 @@ const ChatHeader = (
 
     return () => {
       socket.off(SOCKET_CONVERSATION.TITLE_CHANGE, handleTitleChange)
-      socket.disconnect()
     }
   }, [socket, conversationDetails.id])
 

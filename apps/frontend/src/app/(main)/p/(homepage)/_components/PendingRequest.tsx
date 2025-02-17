@@ -101,11 +101,11 @@ export const PendingRequest = ({ session }: { session: Session }) => {
     }
 
     socket.on(SOCKET_FRIEND.DECLINE, handleDeclineRequest)
-    socket.on(SOCKET_EVENTS.RECEIVE_FRIEND_REQUEST, handleReceivedRequest)
+    socket.on(SOCKET_FRIEND.RECEIVE, handleReceivedRequest)
     socket.on(SOCKET_FRIEND.WITHDRAW, handleWithdrawRequest)
 
     return () => {
-      socket.off(SOCKET_EVENTS.RECEIVE_FRIEND_REQUEST, handleReceivedRequest)
+      socket.off(SOCKET_FRIEND.RECEIVE, handleReceivedRequest)
     }
   })
 

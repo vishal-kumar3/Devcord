@@ -13,7 +13,7 @@ export interface CustomSocket extends Socket {
 
 export const setupSocket = (io: Server) => {
   io.use((socket: CustomSocket, next) => {
-    const room = socket.handshake.auth.room || socket.handshake.headers.room;
+    // const room = socket.handshake.auth.room || socket.handshake.headers.room;
     const userId = socket.handshake.query.userId as string | null;
 
     if (!userId) {
@@ -23,16 +23,17 @@ export const setupSocket = (io: Server) => {
     // if (!room) {
       //   return next(new Error("Invalid room"));
     // }
-    socket.room = room;
+    // socket.room = room;
     socket.userId = userId;
     return next();
   });
 
   io.on(SOCKET_EVENTS.CONNECTION, (socket: CustomSocket) => {
-    if (socket.room) {
-      consumeMessage("chat", socket.room, socket);
-      socket.join(socket.room);
-    }
+    // if (socket.room) {
+    //   console.log("Joined room:- ", socket.room);
+    //   socket.join(socket.room);
+    //   consumeMessage("chat", socket.room, socket);
+    // }
     socket.join(socket.userId);
     // socket.join(Rooms.USER_STATUS)
 
@@ -42,7 +43,6 @@ export const setupSocket = (io: Server) => {
     // online offline idle status
     // WIP: use socket.userId if not working
     // setUserStatus(socket.userId, UserStatusType.IDLE);
-
 
     socket.on(SOCKET_EVENTS.DISCONNECT, () => {
       // setUserStatus(socket.userId, UserStatusType.OFFLINE);

@@ -259,7 +259,7 @@ export const AddMembersToConversation = async (
 
   updatedConversation.users = addedUser
 
-  return { created: null, data: updatedConversation.users, error: null }
+  return { created: null, data: updatedConversation, error: null }
 }
 
 export const removeMemberFromConversation = async (

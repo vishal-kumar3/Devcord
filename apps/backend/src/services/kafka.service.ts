@@ -56,7 +56,7 @@ export const consumeMessage = async (topic: string, roomId: string, socket: Cust
         })
 
         if (db_message) {
-          socket.to(socket.room).emit(SOCKET_CONVERSATION.MESSAGE, db_message);
+          socket.to(db_message.conversationId).emit(SOCKET_CONVERSATION.MESSAGE, db_message);
         }
 
       } catch (error) {

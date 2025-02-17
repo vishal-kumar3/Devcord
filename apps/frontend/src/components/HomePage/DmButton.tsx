@@ -10,13 +10,16 @@ import { showConversationName } from "@/utils/conversation"
 import { Session } from "next-auth"
 import { Tooltip, TooltipContent, TooltipProvider } from "../ui/tooltip"
 import { TooltipTrigger } from "@radix-ui/react-tooltip"
+import { useParams } from "next/navigation"
+import { cn } from "@/lib/cn"
 
 type DMButtonProps = {
   conversation: Conversation
   session: Session
+  active: boolean
 }
 
-export const DMButton = ({ conversation, session }: DMButtonProps) => {
+export const DMButton = ({ active, conversation, session }: DMButtonProps) => {
   const [dmName, setDmName] = useState<string>(conversation.name || "")
   const { socket } = useSocket()
 
@@ -41,7 +44,13 @@ export const DMButton = ({ conversation, session }: DMButtonProps) => {
 
 
   return (
-    <Link href={`/p/user/${conversation.id}`} className="py-1 px-3 flex justify-between items-center rounded-lg hover:bg-white hover:bg-opacity-10 text-neutral-400 hover:text-neutral-300 font-semibold text-base transition-all ease-in">
+    <Link
+      href={`/p/user/${conversation.id}`}
+      className={cn(
+        "py-1 px-3 flex justify-between items-center rounded-xl hover:bg-white/10 text-neutral-400 hover:text-neutral-300 font-semibold text-base transition-all ease-in",
+        active && "bg-white/10 text-white/80"
+      )}
+    >
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -66,3 +75,20 @@ export const DMButton = ({ conversation, session }: DMButtonProps) => {
     </Link>
   )
 }
+
+
+
+/*
+Context Menu for DM:-
+Profile
+Call
+Close DM
+Remove Friend
+
+Context Menu for Group:-
+Invites ( only if user is admin ) -> List all the invitation links
+Change Icon
+Remove Icon
+Leave Group
+
+*/

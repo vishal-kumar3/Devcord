@@ -7,6 +7,5 @@ export const CreateConversationEvent = (
   data: ConversationWithUsers
 ) => {
   if (!socket) return
-  console.log("CreateConversationEvent", data)
   socket.emit(SOCKET_CONVERSATION.CREATE_CONVERSATION, data)
 }

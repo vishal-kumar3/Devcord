@@ -1,6 +1,7 @@
 // ---------- GENERATORS & DATASOURCES ----------
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["prismaSchemaFolder"]
 }
 
 datasource db {
@@ -8,12 +9,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ---------- USER & ACCOUNT MODELS ----------
+
 
 model User {
   id            String    @id @default(cuid())
-  username      String    @unique
   email         String    @unique
+  username      String    @unique
   github_token  String?
   emailVerified DateTime?
   name          String?
@@ -63,6 +64,8 @@ enum UserRole {
   USER
   ADMIN
 }
+
+
 
 // ---------- FRIEND REQUEST MODEL ----------
 
@@ -236,6 +239,11 @@ model Conversation {
   type       ConversationType
   nameEdited DateTime?
 
+  // WIP: Implement image
+  //? For DM:- It would be image of both users
+  //? For Group:- It would be random image with logo and bg color
+  //? For Channel:- It would be some icon(default like #) or emoji
+
   // For DM and GROUP_DM, these arrays represent the admins and participants.
   users  UserConversation[]
 
@@ -273,6 +281,24 @@ model UserConversation {
 
 // ---------- MESSAGE & THREAD MODELS ----------
 
+/// Dedicated model for Threads, which groups messages together.
+/// This lets you track metadata such as lastActiveAt for auto‑deletion.
+model Thread {
+  id                   String       @id @default(cuid())
+  /// Reference to the parent conversation (e.g., the channel conversation)
+  parentConversationId String
+  parentConversation   Conversation @relation("ParentConversationThreads", fields: [parentConversationId], references: [id])
+
+  /// This field should be updated whenever a new message is added to the thread.
+  lastActiveAt DateTime @default(now())
+
+  /// All messages in this thread.
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Message {
   id             String  @id @default(cuid())
   content        String?
@@ -286,11 +312,15 @@ model Message {
   systemData String?
 
   type         MessageType
+
+  attachment Attachment[]
+  embed Embed[]
+  reactions    Reaction[]
+  // messageReference MessageReference?
+
+
   sender       User?        @relation(fields: [senderId], references: [id])
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  reactions    Reaction[]
-  replyTo      Message?     @relation("ReplyTo", fields: [replyToId], references: [id])
-  replies      Message[]    @relation("ReplyTo")
 
   /// Instead of linking a message directly to a thread conversation,
   /// we now refer to the Thread model explicitly.
@@ -313,32 +343,91 @@ enum MessageType {
   SYSTEM
 }
 
-/// Dedicated model for Threads, which groups messages together.
-/// This lets you track metadata such as lastActiveAt for auto‑deletion.
-model Thread {
-  id                   String       @id @default(cuid())
-  /// Reference to the parent conversation (e.g., the channel conversation)
-  parentConversationId String
-  parentConversation   Conversation @relation("ParentConversationThreads", fields: [parentConversationId], references: [id])
+model Attachment {
+  id                  String    @id
+  messageId           String
+  filename            String    @db.VarChar(260)
+  size                Int
+  url                 String    @db.Text
+  proxyUrl            String    @db.Text
+  width               Int?
+  height              Int?
+  duration            Int?              // For audio/video length (in seconds)
+  contentType         String    @db.VarChar(100)
+  flags               Int?
+  placeholder         String?   @db.Text
+  placeholderVersion  Int?
+  title               String?   @db.VarChar(100)
+  contentScanVersion  Int?
+  metadata            Json?             // For extra metadata (e.g., PDF page count)
 
-  /// This field should be updated whenever a new message is added to the thread.
-  lastActiveAt DateTime @default(now())
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  /// All messages in this thread.
-  messages Message[]
+  // Relations
+  message             Message   @relation(fields: [messageId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@index([messageId])
+  @@index([contentType])
 }
 
-// ---------- REACTION MODEL ----------
+model Embed {
+  id                  Int       @id @default(autoincrement())
+  messageId           String
+  type                EmbedType         // Using enum for better type-safety
+  contentScanVersion  Int?
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relations
+  message             Message   @relation(fields: [messageId], references: [id])
+  fields              EmbedField[]
+
+  @@index([messageId])
+  @@index([type])
+}
+
+model EmbedField {
+  id        Int       @id @default(autoincrement())
+  embedId   Int
+  name      String    @db.VarChar(256)
+  value     String    @db.Text
+  inline    Boolean?
+
+  // Relations
+  embed     Embed     @relation(fields: [embedId], references: [id])
+
+  @@index([embedId])
+}
 
 model Reaction {
-  id        Int      @id @default(autoincrement())
-  emoji     String
-  messageId String
-  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  messageId   String
+  emojiId     String    @db.VarChar(20)    // Made required to work with the composite key
+  emojiName   String    @db.VarChar(32)
+  count       Int       @default(0)
+  burstCount  Int       @default(0)
+  me          Boolean   @default(false)
+  burstMe     Boolean   @default(false)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  message     Message   @relation(fields: [messageId], references: [id])
+  user        User?     @relation(fields: [emojiId], references: [id])
+
+  @@id([messageId, emojiId, emojiName])
+  @@index([emojiId, emojiName])
+}
+
+// model Message
+
+enum EmbedType {
+  RICH
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
+  LINK
 }

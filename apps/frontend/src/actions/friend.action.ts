@@ -129,7 +129,6 @@ export const deleteAcceptedRequests = async ({ friendId, status }: { friendId: s
   const session = await getAuthUser()
 
   if (!session) return { data: null, error: "User not found" }
-  console.log(friendId, session.user.id)
   const request = await prisma.friendRequest.findFirst({
     where: {
       OR: [
@@ -174,7 +173,6 @@ export const updateReceivedFriendRequest = async ({ friendId, status }: { friend
     }
   }).catch(e => null)
 
-  console.log(request)
 
   if (!request) return { data: null, error: "Request not found" }
 
@@ -208,7 +206,6 @@ export const updateSentFriendRequest = async ({ friendId, status }: { friendId: 
     }
   }).catch(e => null)
 
-  console.log(request)
 
   if (!request) return { data: null, error: "Request not found" }
 

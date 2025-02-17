@@ -75,4 +75,5 @@ export const SOCKET_CONVERSATION = {
   ADD_MEMBERS: "add-members-conversation",
   REMOVE_MEMBERS: "remove-members-conversation",
   CREATE_CONVERSATION: "create-conversation",
+  JOIN_CONVERSATION: "join-conversation",
 }

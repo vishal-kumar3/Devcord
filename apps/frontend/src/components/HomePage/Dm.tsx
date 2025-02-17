@@ -312,7 +312,8 @@ export const AddMembers = (
           }
 
           setSelectedUser([])
-          socket?.emit(SOCKET_CONVERSATION.ADD_MEMBERS, { conversationId, members: data })
+          CreateConversationEvent(socket, data)
+          socket?.emit(SOCKET_CONVERSATION.ADD_MEMBERS, { conversationId, members: data.users })
           toast.success("Members added successfully")
         }}
       >
@@ -366,7 +367,8 @@ export const AddMembers = (
                 }
 
                 setSelectedUser([])
-                socket?.emit(SOCKET_CONVERSATION.ADD_MEMBERS, { conversationId, members: data })
+                CreateConversationEvent(socket, data)
+                socket?.emit(SOCKET_CONVERSATION.ADD_MEMBERS, { conversationId, members: data.users })
                 toast.success("Selected members added!")
                 return setDialogOpen(false)
               }} className="flex-1 p-2 hover:bg-blue-600 bg-blue-500">Add Members</button>

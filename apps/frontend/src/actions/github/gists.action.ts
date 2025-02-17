@@ -3,7 +3,7 @@ import { getAuthUser } from "../auth.action";
 import { githubApiHelper } from "@/utils/ApiHelpers";
 import { Messages } from "@/utils/enums";
 
-export const getAuthenticatedUserGists = async (since?: string, page?: number, per_page?: number) => {
+export const getAuthenticatedUserGists = async (since: string, page: number, per_page: number) => {
   try {
     const session = await getAuthUser()
     if (!session) return { success: false, message: Messages.USER_NOT_FOUND }

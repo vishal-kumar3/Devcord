@@ -2,10 +2,11 @@ import { User } from "@prisma/client"
 import { ChangeEvent, useEffect, useRef, useState } from "react"
 import { TypingEvent } from "./Chat"
 import { SOCKET_CONVERSATION } from "@devcord/node-prisma/dist/constants/socket.const"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/cn"
 import Image from "next/image"
 import { setSocketMetadata } from "@/lib/socket.config"
 import { useSocket } from "@/providers/socket.provider"
+import { toast } from "sonner"
 
 export const SendMessageInput = (
   { user, conversationId, handleMessageSend }
@@ -13,7 +14,7 @@ export const SendMessageInput = (
     {
       user: User,
       conversationId: string,
-      handleMessageSend: (data: FormData) => void,
+      handleMessageSend: (data: FormData) => Promise<{ error: string | null, success: boolean }>,
     }
 ) => {
   const { socket } = useSocket()
@@ -122,13 +123,14 @@ export const SendMessageInput = (
             autoFocus
             value={message}
             onChange={handleInputChange}
-            onKeyDown={(e) => {
+            onKeyDown={async (e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault()
                 if (message.trim()) {
                   const formData = new FormData()
                   formData.append("msg", message)
-                  handleMessageSend(formData)
+                  const { success, error } = await handleMessageSend(formData)
+                  if (error) return toast.error(error)
                   setMessage("")
                   if(!textareaRef.current) return
                   textareaRef.current.style.height = "40px"

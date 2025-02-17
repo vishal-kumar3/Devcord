@@ -1,3 +1,4 @@
+import { SOCKET_CONVERSATION } from "@devcord/node-prisma/dist/constants/socket.const";
 import { io, Socket } from "socket.io-client";
 
 export type SocketMetadataType = {
@@ -20,7 +21,9 @@ export const getSocket = (userId: string): Socket => {
 
 
 export const setSocketMetadata = (socket: Socket, metadata: SocketMetadataType) => {
-  socket.auth = {
-    room: metadata.room,
-  }
+  console.log("Joining room:- ", metadata.room)
+  // socket.auth = {
+  //   room: metadata.room,
+  // }
+  socket.emit(SOCKET_CONVERSATION.JOIN_CONVERSATION, metadata.room)
 }

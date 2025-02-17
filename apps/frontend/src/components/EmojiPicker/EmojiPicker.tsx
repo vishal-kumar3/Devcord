@@ -1,12 +1,12 @@
-import data from '@emoji-mart/data'
-import { Picker } from 'emoji-mart'
+// import data from '@emoji-mart/data'
+// import { Picker } from 'emoji-mart'
 
-const EmojiPicker = () => {
-  return (
-    <div>
-      <Picker data={data} onEmojiSelect={console.log} />
-    </div>
-  )
-}
+// const EmojiPicker = () => {
+//   return (
+//     <div>
+//       <Picker data={data} onEmojiSelect={console.log} />
+//     </div>
+//   )
+// }
 
-export default EmojiPicker
+// export default EmojiPicker

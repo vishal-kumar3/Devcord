@@ -31,12 +31,13 @@ export function MembersList(
     setSocketMetadata(socket, { room: conversationId })
 
     const handleAddMembers = (data: AddMembersData) => {
-      console.log("Data received:- ", data)
+      if (data.conversationId !== conversationId) return
       const { members } = data
       setMembers((prevMembers) => [...prevMembers, ...members])
     }
 
     const handleRemoveMembers = (data: RemoveMembersData) => {
+      if(data.conversationId !== conversationId) return
       const { members } = data
       setMembers((prevMembers) =>
         prevMembers.filter((user) => !members.includes(user.userId)))
