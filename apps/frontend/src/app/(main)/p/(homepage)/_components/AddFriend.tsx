@@ -26,7 +26,6 @@ export const AddFriend = () => {
     }
 
     if (data.status === "PENDING") {
-      console.log("SEND FRIEND REQUEST", data, socket)
       socket?.emit(SOCKET_FRIEND.SEND, data)
       return setRequestSuccess("Friend request sent!")
     }

@@ -16,10 +16,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         data: { emailVerified: new Date() }
       })
     },
-
-    async createUser({ user }) {
-      console.log(user)
-    },
   },
 
   callbacks: {

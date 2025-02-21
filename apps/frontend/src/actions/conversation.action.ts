@@ -178,7 +178,7 @@ export const ChangeConversationName = async (conversationId: string, name: strin
     return null
   })
 
-  return conversation
+  return {id: conversation?.id ,name: conversation?.name}
 }
 
 export const AddMembersToConversation = async (

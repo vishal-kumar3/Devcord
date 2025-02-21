@@ -28,7 +28,6 @@ export const ConversationList = ({ conversations, session }: { conversations: Co
     }
 
     const handleAddMembers = async (data: AddMembersData) => {
-      console.log("Added this user:- ", data)
       if (data.members.some(userConv => userConv.userId === session.user.id)) {
         const addedConverastion = await getConversationById(data.conversationId)
         if (!addedConverastion) return

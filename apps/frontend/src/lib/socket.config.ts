@@ -21,9 +21,5 @@ export const getSocket = (userId: string): Socket => {
 
 
 export const setSocketMetadata = (socket: Socket, metadata: SocketMetadataType) => {
-  console.log("Joining room:- ", metadata.room)
-  // socket.auth = {
-  //   room: metadata.room,
-  // }
   socket.emit(SOCKET_CONVERSATION.JOIN_CONVERSATION, metadata.room)
 }

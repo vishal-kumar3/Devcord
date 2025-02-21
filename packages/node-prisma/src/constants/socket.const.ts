@@ -16,9 +16,21 @@ export type MessageData = {
   msg: string
   user: User
   conversationId: string
-  prevSender?: string
-  prevCreatedAt?: Date
+  attachments?: AttachmentData[]
 }
+
+export type AttachmentData = {
+  id: string
+  fileName: string
+  size: number
+  url: string
+  proxyUrl?: string
+  width: number
+  height: number
+  contentType: string
+  title?: string
+}
+
 
 export type AddMembersData = {
   conversationId: string

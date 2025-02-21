@@ -2,7 +2,7 @@ import { prisma } from "@devcord/node-prisma/dist/index.js";
 import { createConsumer, createProducer } from "../config/kafka.config.js"
 import { CustomSocket } from "../socket.js";
 import { User } from "@prisma/client";
-import { SOCKET_CONVERSATION } from "@devcord/node-prisma/dist/constants/socket.const.js";
+import { MessageData, SOCKET_CONVERSATION } from "@devcord/node-prisma/dist/constants/socket.const.js";
 
 export type ChatMsg = {
   msg: string
@@ -12,7 +12,7 @@ export type ChatMsg = {
   prevCreatedAt?: Date
 }
 
-export const produceMessage = async (topic: string, roomId: string, messages: any) => {
+export const produceMessage = async (topic: string, roomId: string, messages: MessageData) => {
   try {
     const producer = await createProducer();
     await producer.send({
@@ -42,16 +42,32 @@ export const consumeMessage = async (topic: string, roomId: string, socket: Cust
       if (roomIdKey !== roomId) return;
 
       try {
-        const message_data = msg.messages as ChatMsg
+        const message_data = msg.messages as MessageData
         const db_message = await prisma.message.create({
           data: {
             content: message_data.msg,
             sender: { connect: { id: message_data.user.id } },
             conversation: { connect: { id: message_data.conversationId } },
-            type: "TEXT"
+            attachment: {
+              createMany: {
+                data: message_data.attachments?.map(attachment => ({
+                  id: attachment.id,
+                  filename: attachment.fileName,
+                  size: attachment.size,
+                  url: attachment.url,
+                  proxyUrl: attachment.proxyUrl || attachment.url,
+                  contentType: attachment.contentType,
+                  height: attachment.height,
+                  width: attachment.width,
+                  title: attachment.title,
+                  conversationId: message_data.conversationId
+                }))
+              }
+            }
           },
           include: {
-            sender: true
+            sender: true,
+            attachment: true
           }
         })
 

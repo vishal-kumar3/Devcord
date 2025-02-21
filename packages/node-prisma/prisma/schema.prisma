@@ -1,6 +1,6 @@
 // ---------- GENERATORS & DATASOURCES ----------
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["prismaSchemaFolder"]
 }
 
@@ -8,8 +8,6 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
-
 
 model User {
   id            String    @id @default(cuid())
@@ -65,8 +63,6 @@ enum UserRole {
   ADMIN
 }
 
-
-
 // ---------- FRIEND REQUEST MODEL ----------
 
 enum FriendRequestStatus {
@@ -102,9 +98,10 @@ model Project {
   banner      String?
   repo        String? @unique
 
-  categories Category[]
-  channels   Channel[]
-  roles      Role[]
+  categories  Category[]
+  channels    Channel[]
+  roles       Role[]
+  attachments Attachment[]
 
   ownerId String
   owner   User   @relation("ProjectOwner", fields: [ownerId], references: [id])
@@ -201,6 +198,7 @@ model Channel {
 
   // Instead of an implicit many-to-many field, we use the join model.
   roleChannels RoleChannel[] @relation("ChannelToRoleChannel")
+  attachments  Attachment[]
 
   forumLayout ForumLayout?
   order       Int?
@@ -245,9 +243,10 @@ model Conversation {
   //? For Channel:- It would be some icon(default like #) or emoji
 
   // For DM and GROUP_DM, these arrays represent the admins and participants.
-  users  UserConversation[]
+  users UserConversation[]
 
-  messages Message[]
+  messages    Message[]
+  attachments Attachment[]
 
   // Add a back-relation for threads (from Thread.parentConversation).
   threads Thread[] @relation("ParentConversationThreads")
@@ -270,7 +269,7 @@ enum ConversationType {
 model UserConversation {
   userId         String
   conversationId String
-  isAdmin        Boolean @default(false)
+  isAdmin        Boolean  @default(false)
   joinedAt       DateTime @default(now())
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -305,19 +304,14 @@ model Message {
   senderId       String?
   conversationId String
 
-  replyToId String?
-
   fileUrl    String?
   duration   Int?
   systemData String?
 
-  type         MessageType
-
   attachment Attachment[]
-  embed Embed[]
-  reactions    Reaction[]
+  embed      Embed[]
+  reactions  Reaction[]
   // messageReference MessageReference?
-
 
   sender       User?        @relation(fields: [senderId], references: [id])
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -334,88 +328,86 @@ model Message {
   @@index([conversationId])
 }
 
-enum MessageType {
-  TEXT
-  VOICE_NOTE
-  IMAGE
-  VIDEO
-  FILE
-  SYSTEM
-}
-
 model Attachment {
-  id                  String    @id
-  messageId           String
-  filename            String    @db.VarChar(260)
-  size                Int
-  url                 String    @db.Text
-  proxyUrl            String    @db.Text
-  width               Int?
-  height              Int?
-  duration            Int?              // For audio/video length (in seconds)
-  contentType         String    @db.VarChar(100)
-  flags               Int?
-  placeholder         String?   @db.Text
-  placeholderVersion  Int?
-  title               String?   @db.VarChar(100)
-  contentScanVersion  Int?
-  metadata            Json?             // For extra metadata (e.g., PDF page count)
+  id                 String  @id
+  messageId          String
+  filename           String  @db.VarChar(260)
+  size               Int
+  url                String  @db.Text
+  proxyUrl           String  @db.Text
+  width              Int?
+  height             Int?
+  duration           Int? // For audio/video length (in seconds)
+  contentType        String  @db.VarChar(100)
+  flags              Int?
+  placeholder        String? @db.Text
+  placeholderVersion Int?
+  title              String? @db.VarChar(100)
+  contentScanVersion Int?
+  metadata           Json? // For extra metadata (e.g., PDF page count)
 
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  message             Message   @relation(fields: [messageId], references: [id])
+  conversationId String
+  channelId      String?
+  projectId      String?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  channel      Channel?     @relation(fields: [channelId], references: [id])
+  project      Project?     @relation(fields: [projectId], references: [id])
+  message      Message      @relation(fields: [messageId], references: [id])
 
   @@index([messageId])
   @@index([contentType])
 }
 
 model Embed {
-  id                  Int       @id @default(autoincrement())
-  messageId           String
-  type                EmbedType         // Using enum for better type-safety
-  contentScanVersion  Int?
+  id                 Int       @id @default(autoincrement())
+  messageId          String
+  type               EmbedType // Using enum for better type-safety
+  contentScanVersion Int?
 
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  message             Message   @relation(fields: [messageId], references: [id])
-  fields              EmbedField[]
+  message Message      @relation(fields: [messageId], references: [id])
+  fields  EmbedField[]
 
   @@index([messageId])
   @@index([type])
 }
 
 model EmbedField {
-  id        Int       @id @default(autoincrement())
-  embedId   Int
-  name      String    @db.VarChar(256)
-  value     String    @db.Text
-  inline    Boolean?
+  id      Int      @id @default(autoincrement())
+  embedId Int
+  name    String   @db.VarChar(256)
+  value   String   @db.Text
+  inline  Boolean?
 
   // Relations
-  embed     Embed     @relation(fields: [embedId], references: [id])
+  embed Embed @relation(fields: [embedId], references: [id])
 
   @@index([embedId])
 }
 
 model Reaction {
-  messageId   String
-  emojiId     String    @db.VarChar(20)    // Made required to work with the composite key
-  emojiName   String    @db.VarChar(32)
-  count       Int       @default(0)
-  burstCount  Int       @default(0)
-  me          Boolean   @default(false)
-  burstMe     Boolean   @default(false)
+  messageId  String
+  emojiId    String  @db.VarChar(20) // Made required to work with the composite key
+  emojiName  String  @db.VarChar(32)
+  count      Int     @default(0)
+  burstCount Int     @default(0)
+  me         Boolean @default(false)
+  burstMe    Boolean @default(false)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  message     Message   @relation(fields: [messageId], references: [id])
-  user        User?     @relation(fields: [emojiId], references: [id])
+  message Message @relation(fields: [messageId], references: [id])
+  user    User?   @relation(fields: [emojiId], references: [id])
 
   @@id([messageId, emojiId, emojiName])
   @@index([emojiId, emojiName])

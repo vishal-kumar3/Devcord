@@ -13,9 +13,24 @@ export default {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         back: {
-          one: 'var(--back-one)',
-          two: 'var(--back-two)',
-          three: 'var(--back-three)',
+          one: {
+            DEFAULT: 'var(--back-one)',
+            one: 'var(--back-one-one)',
+            two: 'var(--back-one-two)',
+            three: 'var(--back-one-three)',
+          },
+          two: {
+            DEFAULT: 'var(--back-two)',
+            one: 'var(--back-two-one)',
+            two: 'var(--back-two-two)',
+            three: 'var(--back-two-three)',
+          },
+          three: {
+            DEFAULT: 'var(--back-three)',
+            one: 'var(--back-three-one)',
+            two: 'var(--back-three-two)',
+            three: 'var(--back-three-three)',
+          },
           four: 'var(--back-four)',
         },
         text: {

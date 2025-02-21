@@ -1,5 +1,3 @@
-import { getAuthUser } from "@/actions/auth.action";
-import { getFollowersAndFollowing } from "@/actions/github/guser.action";
 import Image from "next/image";
 
 export default async function Home() {

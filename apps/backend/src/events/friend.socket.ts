@@ -6,7 +6,6 @@ export const handleFriendEvents = (socket: CustomSocket, io: Server) => {
 
   // SEND FRIEND REQUEST
   socket.on(SOCKET_FRIEND.SEND, async (data: FriendRquestData) => {
-    console.log("SEND FRIEND REQUEST", data)
     io.to(data.receiverId).emit(SOCKET_FRIEND.RECEIVE, data)
   })
 

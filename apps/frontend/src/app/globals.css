@@ -3,16 +3,24 @@
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Roboto','Arial', 'Helvetica', 'sans-serif';
 }
-
 
 /* Color Palette */
 :root {
   /* Background Colors */
   --back-one: #2E2E2E;
+  --back-one-one: #323232;
+  --back-one-two: #343434;
+  --back-one-three: #353535;
   --back-two: #363636;
+  --back-two-one: #383838;
+  --back-two-two: #3A3A3A;
+  --back-two-three: #3D3D3D;
   --back-three: #404040;
+  --back-three-one: #454545;
+  --back-three-two: #484848;
+  --back-three-three: #4F4F4F;
   --back-four: #555555;
 
   /* Text Colors */
@@ -117,6 +125,17 @@ body {
 @layer base {
   * {
     @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;

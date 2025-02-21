@@ -4,7 +4,7 @@ import { getConversationAndUserById } from "@/actions/conversation.action";
 import { getMessageByConversationId } from "@/actions/message.action";
 import Chat from "@/components/Chat/Chat";
 import { ConversationWithMembers } from "@devcord/node-prisma/dist/types/userConversation.types";
-import { MessageWithSender } from "@devcord/node-prisma/dist/types/message.types";
+import { MessageWithSenderAndAttachments } from "@devcord/node-prisma/dist/types/message.types";
 
 export default async function Page({
   params
@@ -25,12 +25,12 @@ export default async function Page({
 
   if(conversation.users.every(u => u.userId !== loggedUser.id)) return notFound()
 
-  const chat_messages: MessageWithSender[] | null = await getMessageByConversationId(conversationId)
+  const chat_messages: MessageWithSenderAndAttachments[] | null = await getMessageByConversationId(conversationId)
 
 
   return (
     <div className="w-full">
-      <Chat chat_message={chat_messages || []} conversationId={conversationId} conversation={conversation} user={loggedUser} />
+      <Chat chat_message={chat_messages || []} conversation={conversation} currentUser={loggedUser} />
       {/* <DummyChat chat_message={chat_messages || []} conversationId={conversationId} conversation={conversation} user={loggedUser} /> */}
     </div>
   );

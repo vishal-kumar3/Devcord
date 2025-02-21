@@ -9,5 +9,5 @@ export const checkMembership = async (userId: string, conversationId: string) =>
     where: { userId_conversationId: { userId, conversationId } }
   }).catch(err => null)
 
-  return membership
+  return !!membership
 }
