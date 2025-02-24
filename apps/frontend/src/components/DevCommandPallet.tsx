@@ -1,10 +1,8 @@
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "@/components/ui/command"
 import { cn } from "@/lib/cn"
 import { useEffect, useState } from "react"
@@ -31,7 +29,6 @@ export const DevCommandPallet = <T,>({ items, onSelect, renderItem, isOpen, onCl
     if (!isOpen) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      console.log(event.key)
       if (event.key === "ArrowDown") {
         setSelectedIndex((prev) => Math.min(prev + 1, items.length - 1))
       } else if (event.key === "ArrowUp") {
@@ -61,24 +58,22 @@ export const DevCommandPallet = <T,>({ items, onSelect, renderItem, isOpen, onCl
 
   return (
     <Command>
-      <CommandList>
-        {
-          items.map((item, index) => (
-            <CommandItem
-              key={index}
-              onClick={() => {
-                onSelect(item)
-                onClose()
-              }}
-              className={cn(
-                "flex cursor-pointer items-center rounded-lg px-3 py-2 text-sm",
-                index === selectedIndex && "bg-accent text-accent-foreground"
-              )}
-            >
-              {renderItem(item)}
-            </CommandItem>
-          ))
-        }
+      <CommandList className="relative max-h-[50vh] flex flex-col border-2 border-neutral-600 rounded-xl">
+        <CommandGroup heading="EMOJI SELECTOR">
+          {
+            items.map((item, index) => (
+              <CommandItem
+                key={index}
+                className={cn(
+                  "flex cursor-pointer items-center hover:!bg-back-one rounded-lg px-3 py-[2px] text-sm",
+                  index === selectedIndex && "bg-accent text-accent-foreground"
+                )}
+              >
+                {renderItem(item)}
+              </CommandItem>
+            ))
+          }
+        </CommandGroup>
       </CommandList>
     </Command>
   )

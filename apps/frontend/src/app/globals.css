@@ -3,86 +3,86 @@
 @tailwind utilities;
 
 body {
-  font-family: 'Roboto','Arial', 'Helvetica', 'sans-serif';
+  font-family: "Roboto", "Arial", "Helvetica", "sans-serif";
 }
 
 /* Color Palette */
 :root {
   /* Background Colors */
-  --back-one: #2E2E2E;
+  --back-one: #2e2e2e;
   --back-one-one: #323232;
   --back-one-two: #343434;
   --back-one-three: #353535;
   --back-two: #363636;
   --back-two-one: #383838;
-  --back-two-two: #3A3A3A;
-  --back-two-three: #3D3D3D;
+  --back-two-two: #3a3a3a;
+  --back-two-three: #3d3d3d;
   --back-three: #404040;
   --back-three-one: #454545;
   --back-three-two: #484848;
-  --back-three-three: #4F4F4F;
+  --back-three-three: #4f4f4f;
   --back-four: #555555;
 
   /* Text Colors */
-  --text-primary: #FFFFFF;
-  --text-secondary: #B0B0B0;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
   --text-muted: #808080;
-  --text-hovered: #A0A0A0;
-  --text-selected: #FFFFFF;
+  --text-hovered: #a0a0a0;
+  --text-selected: #ffffff;
 
   /* Interactive Elements */
-  --button-background: #7289DA;
-  --button-background-hovered: #5A73A1;
-  --button-text: #FFFFFF;
-  --button-text-hovered: #E3E3E3;
-  --link: #7289DA;
-  --link-hovered: #5A73A1;
+  --button-background: #7289da;
+  --button-background-hovered: #5a73a1;
+  --button-text: #ffffff;
+  --button-text-hovered: #e3e3e3;
+  --link: #7289da;
+  --link-hovered: #5a73a1;
 
   /* Status and Notifications */
-  --status-online: #43B581;
-  --status-idle: #F8A61C;
-  --status-do-not-disturb: #F04747;
-  --status-offline: #747F8D;
+  --status-online: #43b581;
+  --status-idle: #f8a61c;
+  --status-do-not-disturb: #f04747;
+  --status-offline: #747f8d;
 
   /* Dividers and Borders */
-  --divider: #1E1E1E;
+  --divider: #1e1e1e;
   --border-default: #404040;
   --border-hovered: #555555;
 
   /* Alert and Notification Colors */
-  --alert-success: #43B581;
-  --alert-error: #F04747;
-  --alert-warning: #FEE75C;
+  --alert-success: #43b581;
+  --alert-error: #f04747;
+  --alert-warning: #fee75c;
 
   /* Text */
-  --milky-white: #FFF1DE;
-  --hovered-text: #FFECBD;
-  --clicked-text: #FFD1A1;
-  --muted-text: #F8D9A5;
-  --description-text: #F4C69F;
-  --highlighted-text: #FFCC99;
-  --selected-text: #FFB280;
-  --disabled-text: #E9D5B8;
-  --error-text: #FF6F6F;
-  --success-text: #A8E6A3;
-  --link-text: #B0C5FF;
-  --user-status-text: #C4C4C4;
+  --milky-white: #fff1de;
+  --hovered-text: #ffecbd;
+  --clicked-text: #ffd1a1;
+  --muted-text: #f8d9a5;
+  --description-text: #f4c69f;
+  --highlighted-text: #ffcc99;
+  --selected-text: #ffb280;
+  --disabled-text: #e9d5b8;
+  --error-text: #ff6f6f;
+  --success-text: #a8e6a3;
+  --link-text: #b0c5ff;
+  --user-status-text: #c4c4c4;
 
   --nav: 50px
   --sidebar: 270px
-
+  --radius: 0.5rem;
 }
 
 .nav {
-  height: "50px"
+  height: "50px";
 }
 
 .sidebar {
-  width: "270px"
+  width: "270px";
 }
 
 .flexibleInput {
-  field-sizing: content
+  field-sizing: content;
 }
 
 @layer base {
@@ -119,6 +119,7 @@ body {
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --radius: 0.5rem;
   }
 }
 
@@ -130,8 +131,6 @@ body {
     @apply bg-background text-foreground;
   }
 }
-
-
 
 @layer base {
   * {

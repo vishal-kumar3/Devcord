@@ -3,21 +3,104 @@ import { cn } from "@/lib/cn"
 import { formatDate } from "@/utils/date_time"
 import { MessageWithSenderAndAttachments } from "@devcord/node-prisma/dist/types/message.types";
 import Image from "next/image"
-import { ShowMessageImage, ShowMessageVideo } from "./ShowMessageFile";
+import { ShowMessageFile, ShowMessageImage, ShowMessageVideo } from "./ShowMessageFile";
 import MessageContextMenu from "./MessageContextMenu";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSocket } from "@/providers/socket.provider";
+import { EmojiSuggestions } from "../Emoji/EmojiSuggestions";
+import { RenderEmojiPicker } from "../Emoji/EmojiPicker";
+import { SOCKET_CONVERSATION } from "@devcord/node-prisma/dist/constants/socket.const";
+import { TypingEvent } from "../Chat/Chat";
+import { User } from "@prisma/client";
 
 
 // WIP: implement group message logic
 
-const Message = ({ message }: { message: MessageWithSenderAndAttachments }) => {
+const Message = ({ message, currentUser }: { message: MessageWithSenderAndAttachments, currentUser: User }) => {
   const [editing, setEditing] = useState<boolean>(false)
   const [msg, setMsg] = useState<string>(message.content || "")
   const [emojiSearch, setEmojiSearch] = useState<string>("")
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const localTypingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [emojiSearchPosition, setEmojiSearchPosition] = useState({ top: 0 });
+  const [deleteFiles, setDeleteFiles] = useState<string[]>([])
+  const { socket } = useSocket()
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyPress)
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress
+      )
+    }
+  })
+
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter" && !event.shiftKey && emojiSearch === '') {
+      setEmojiSearch('');
+      handleFormSubmit(event);
+    }
+    if (event.ctrlKey && event.key === 'c' && editing) {
+      onEditCancel()
+    }
+    if ((event.key === "ArrowUp" || event.key === "ArrowDown") && emojiSearch.length > 1) {
+      event.preventDefault();
+    }
+  };
+
+  const setEdit = () => {
+    setEditing(true);
+    setTimeout(() => {
+      adjustTextareaHeight()
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(msg.length, msg.length);
+    }, 0);
+  }
+
+  const onEditCancel = () => {
+    setEditing(false)
+    setMsg(message.content || "")
+    setDeleteFiles([])
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (!socket) return
+    const currentValue = e.target.value
     setMsg(e.target.value)
+    adjustTextareaHeight()
+
+    const cursorPosition = e.target.selectionStart;
+    const textBeforeCursor = currentValue.slice(0, cursorPosition);
+    const match = textBeforeCursor.match(/:(\w*)$/);
+
+    if (match) {
+      setEmojiSearch(match[1]);
+      if (textareaRef.current) {
+        setEmojiSearchPosition({
+          top: parseInt(textareaRef.current.style.height) + 40,
+        });
+      }
+    } else {
+      setEmojiSearch('');
+    }
+
+    socket.emit(SOCKET_CONVERSATION.TYPING, {
+      user: currentUser,
+      conversationId: message.conversationId,
+      typing: true
+    } as TypingEvent)
+
+    if (localTypingTimeoutRef.current) {
+      clearTimeout(localTypingTimeoutRef.current)
+    }
+
+    localTypingTimeoutRef.current = setTimeout(() => {
+      socket.emit(SOCKET_CONVERSATION.TYPING, {
+        user: currentUser,
+        conversationId: message.conversationId,
+        typing: false
+      } as TypingEvent)
+    }, 2000)
   }
 
   const adjustTextareaHeight = () => {
@@ -29,19 +112,12 @@ const Message = ({ message }: { message: MessageWithSenderAndAttachments }) => {
 
   const handleFormSubmit = (event) => {
     event.preventDefault();
-    if (msg.trim() === '') {
-      return;
+    if (msg.trim() === '' || msg.trim() === message.content) {
+      return onEditCancel()
     }
     // onSave(msg);
-    setMsg('');
+    setEditing(false)
   }
-
-  const handleKeyPress = (event) => {
-    if (event.key === "Enter" && !event.shiftKey && emojiSearch === '') {
-      setEmojiSearch('');
-      handleFormSubmit(event);
-    }
-  };
 
   const insertEmoji = (emoji: string) => {
     if (!textareaRef.current) return;
@@ -54,6 +130,7 @@ const Message = ({ message }: { message: MessageWithSenderAndAttachments }) => {
       // Replace the emoji shortcode with the actual emoji
       const newTextBeforeCursor = textBeforeCursor.replace(/:(\w*)$/, emoji);
       const newContent = newTextBeforeCursor + textAfterCursor;
+
       setMsg(newContent);
       setEmojiSearch('');
 
@@ -83,11 +160,16 @@ const Message = ({ message }: { message: MessageWithSenderAndAttachments }) => {
     adjustTextareaHeight();
   };
 
+  const handleDeleteMessage = () => {
+    
+  }
+
   return (
     <MessageContextMenu
       message={message}
-      setEditing={setEditing}
-      currentUser="1"
+      setEditing={setEdit}
+      currentUser={currentUser}
+      onDelete={() => handleDeleteMessage()}
     >
       <div className={cn(
         "relative flex group px-4 gap-4 hover:bg-back-two-two transition-colors ease-in-out duration-200 mt-4 pt-1"
@@ -118,33 +200,68 @@ const Message = ({ message }: { message: MessageWithSenderAndAttachments }) => {
           {
             editing ? (
               <div className="relative w-full">
-                <textarea
-                  ref={textareaRef}
-                  value={msg}
-                  name="msg"
-                  onChange={handleChange}
-                  onKeyDown={handleKeyPress}
-                  className="w-full h-auto bg-back-one rounded-xl text-gray-100 outline-none resize-none px-3 py-2 min-h-[40px] max-h-[50vh] overflow-y-auto"
-                  style={{
-                    lineHeight: '1.375rem',
+                <EmojiSuggestions
+                  isOpen={!!emojiSearch}
+                  query={emojiSearch.toLocaleLowerCase()}
+                  onSelect={(emoji) => {
+                    insertEmoji(emoji)
                   }}
+                  onClose={() => setEmojiSearch('')}
+                  position={emojiSearchPosition}
                 />
+                <div className="relative">
+                  <textarea
+                    autoComplete="off"
+                    ref={textareaRef}
+                    value={msg}
+                    name="msg"
+                    onChange={handleChange}
+                    onKeyDown={handleKeyPress}
+                    className="w-full h-auto bg-back-one rounded-xl text-gray-100 outline-none resize-none px-3 py-2 min-h-[40px] max-h-[50vh] overflow-y-auto"
+                    style={{
+                      lineHeight: '1.375rem',
+                    }}
+                  />
+                  <div className="flex gap-2 text-sm">
+                    <div>
+                      <span>ctrl + c to </span>
+                      <button onClick={onEditCancel} className="text-red-500 hover:underline">cancel</button>
+                    </div>
+                    <div>
+                      <span>enter to </span>
+                      <button type="submit" className="text-text-success hover:underline">save</button>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute top-0 right-0">
+                  <RenderEmojiPicker
+                    onSelect={(emoji) => insertEmoji(emoji)}
+                  />
+                </div>
               </div>
             ) : (
               <div className="text-text">{message.content}</div>
             )
           }
-          <div className="grid grid-cols-2 gap-2 max-w-[900px]">
+          <div className="grid grid-cols-2 gap-2 max-w-[460px]">
             {message.attachment?.map((attachment) => {
-              if (attachment.contentType.includes("image")) {
-                return <ShowMessageImage key={attachment.id} attachment={attachment} />
-              }
-              else if (attachment.contentType.includes("video")) {
-                return <ShowMessageVideo key={attachment.id} attachment={attachment} />
-              }
-              else {
-                return <div key={attachment.id} className="text-text-muted">{attachment.filename}</div>
-              }
+              if (deleteFiles.includes(attachment.id)) return null
+              return (
+                <ShowMessageFile
+                  key={attachment.id}
+                  isEditOn={editing}
+                  attachment={attachment}
+                  setDeleteFiles={setDeleteFiles}
+                >
+                  {
+                    attachment.contentType.includes("image") ?
+                      <ShowMessageImage attachment={attachment} />
+                      : attachment.contentType.includes("video") ?
+                        <ShowMessageVideo attachment={attachment} />
+                        : <div className="text-text-muted">{attachment.filename}</div>
+                  }
+                </ShowMessageFile>
+              )
             })}
           </div>
         </form>

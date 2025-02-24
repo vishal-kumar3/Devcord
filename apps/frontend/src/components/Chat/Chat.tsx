@@ -113,7 +113,7 @@ const Chat = (
         {
           chat.map((msg: MessageWithSenderAndAttachments, index) => {
             return (
-              <Message key={index} message={msg} />
+              <Message currentUser={currentUser} key={index} message={msg} />
             )
           })
         }

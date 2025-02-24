@@ -50,6 +50,11 @@ export type createDmConversationData = {
 
 export type FriendRquestData = FriendRequest
 
+export type DeleteConversationMessage = {
+  conversationId: string
+  messageId: string
+}
+
 export const UserStatusType = {
   ONLINE: "online",
   OFFLINE: "offline",
@@ -81,6 +86,8 @@ export const SOCKET_USER_STATUS = {
 }
 
 export const SOCKET_CONVERSATION = {
+  EDIT_MESSAGE: "edit-message-conversation",
+  DELETE_MESSAGE: "delete-message-conversation",
   MESSAGE: "message-conversation",
   TYPING: "typing-conversation",
   TITLE_CHANGE: "title-change-conversation",

@@ -149,7 +149,6 @@ export const SendMessageInput = (
   }
 
   const handleKeyPress = (event) => {
-    console.log(emojiSearch)
     if (event.key === "Enter" && !event.shiftKey && emojiSearch === '') {
       setEmojiSearch('');
       handleFormSubmit(event);
@@ -249,6 +248,7 @@ export const SendMessageInput = (
             onSelect={(emoji) => {
               insertEmoji(emoji)
             }}
+            onClose={() => setEmojiSearch('')}
             position={emojiSearchPosition}
           />
           <input

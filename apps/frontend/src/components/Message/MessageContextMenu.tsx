@@ -5,12 +5,14 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
 import { MessageWithSenderAndAttachments } from "@devcord/node-prisma/dist/types/message.types"
+import { User } from "@prisma/client"
 import { Dispatch, SetStateAction } from "react"
 
 export type MessageContextMenuProps = {
-  currentUser: string
+  currentUser: User
   message: MessageWithSenderAndAttachments
-  setEditing: Dispatch<SetStateAction<boolean>>
+  setEditing: () => void
+  onDelete: () => void
   children: React.ReactNode
 }
 
@@ -25,11 +27,15 @@ const MessageContextMenu = ({ message, currentUser, setEditing, children }: Mess
         className="bg-back-one"
       >
         <ContextMenuItem>Profile</ContextMenuItem>
-        <ContextMenuItem>Billing</ContextMenuItem>
-        <ContextMenuItem>Team</ContextMenuItem>
-        <ContextMenuItem
-          onClick={() => setEditing(true)}
-        >Edit Message</ContextMenuItem>
+        {
+          message.senderId === currentUser.id &&
+          <>
+            <ContextMenuItem
+              onClick={() => setEditing()}
+            >Edit Message</ContextMenuItem>
+            <ContextMenuItem>Delete Message</ContextMenuItem>
+          </>
+        }
       </ContextMenuContent>
     </ContextMenu>
   )
