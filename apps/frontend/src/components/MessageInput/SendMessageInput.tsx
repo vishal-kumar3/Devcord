@@ -80,12 +80,13 @@ export const SendMessageInput = (
 
   const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     if (!socket) return
-    setMessage(e.target.value)
+    const currentValue = e.target.value
+    setMessage(currentValue)
     adjustTextareaHeight()
 
     // Handle emoji search
     const cursorPosition = e.target.selectionStart;
-    const textBeforeCursor = message.slice(0, cursorPosition);
+    const textBeforeCursor = currentValue.slice(0, cursorPosition);
     const match = textBeforeCursor.match(/:(\w*)$/);
 
     if (match) {
@@ -148,9 +149,13 @@ export const SendMessageInput = (
   }
 
   const handleKeyPress = (event) => {
+    console.log(emojiSearch)
     if (event.key === "Enter" && !event.shiftKey && emojiSearch === '') {
       setEmojiSearch('');
       handleFormSubmit(event);
+    }
+    if((event.key === "ArrowUp" || event.key === "ArrowDown") && emojiSearch.length > 1) {
+      event.preventDefault();
     }
   };
 
@@ -174,6 +179,7 @@ export const SendMessageInput = (
       // Replace the emoji shortcode with the actual emoji
       const newTextBeforeCursor = textBeforeCursor.replace(/:(\w*)$/, emoji);
       const newContent = newTextBeforeCursor + textAfterCursor;
+
       setMessage(newContent);
       setEmojiSearch('');
 
@@ -202,7 +208,6 @@ export const SendMessageInput = (
 
     adjustTextareaHeight();
   };
-
 
   // WIP: add typing user hover
   // WIP: handle multiple users typing like limit showing users typing

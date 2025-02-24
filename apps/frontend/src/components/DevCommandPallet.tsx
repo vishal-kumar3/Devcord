@@ -43,6 +43,7 @@ export const DevCommandPallet = <T,>({ items, onSelect, renderItem, isOpen, onCl
       } else if (event.key === "Escape") {
         onClose()
       } else if (onSpecialSelect && event.key === ":") {
+        event.preventDefault()
         onSpecialSelect()
         onClose()
       }
