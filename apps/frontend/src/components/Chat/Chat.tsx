@@ -6,13 +6,15 @@ import Message from "../Message/Message"
 import { MembersList } from "./MembersList"
 import { cn } from "../../lib/cn"
 import { User } from "@prisma/client"
-import { MessageData, RemoveMembersData, SOCKET_CONVERSATION } from "@devcord/node-prisma/dist/constants/socket.const.js"
+import { DeleteConversationMessage, MessageData, RemoveMembersData, SOCKET_CONVERSATION } from "@devcord/node-prisma/dist/constants/socket.const.js"
 import { SendMessageInput } from "../MessageInput/SendMessageInput"
 import { useSocket } from "@/providers/socket.provider"
 import { ConversationWithMembers } from "@devcord/node-prisma/dist/types/conversation.types"
 import { MessageWithSenderAndAttachments } from "@devcord/node-prisma/dist/types/message.types"
 import { useRouter } from "next/navigation"
 import { checkMembership } from "@/actions/userConversation.action"
+import { deleteMessage } from "@/actions/message.action"
+import { toast } from "sonner"
 
 export type TypingEvent = {
   user: User
@@ -51,6 +53,16 @@ const Chat = (
     return { success: true, error: null }
   }
 
+  const handleDeleteMessage = async (msgId: string) => {
+    const { error, messageId } = await deleteMessage(msgId)
+    if (error) return toast.error(error)
+    if (messageId) {
+      setChat((prevChat) => prevChat.filter((msg) => msg.id !== messageId))
+      socket?.emit(SOCKET_CONVERSATION.DELETE_MESSAGE, { conversationId: conversation.id, messageId })
+      toast.success("Message deleted successfully")
+    }
+  }
+
   useEffect(() => {
     if (!socket) return
     socket.connect()
@@ -66,12 +78,20 @@ const Chat = (
       }
     }
 
+    const handleDeleteMessage = (data: DeleteConversationMessage) => {
+      if (data.conversationId === conversation.id) {
+        setChat((prevChat) => prevChat.filter((msg) => msg.id !== data.messageId))
+      }
+    }
+
     socket.on(SOCKET_CONVERSATION.REMOVE_MEMBERS, handleRemoveMembers)
     socket.on(SOCKET_CONVERSATION.MESSAGE, handleMessage)
+    socket.on(SOCKET_CONVERSATION.DELETE_MESSAGE, handleDeleteMessage)
 
     return () => {
       socket.off(SOCKET_CONVERSATION.MESSAGE, handleMessage)
       socket.off(SOCKET_CONVERSATION.REMOVE_MEMBERS, handleRemoveMembers)
+      socket.off(SOCKET_CONVERSATION.DELETE_MESSAGE, handleDeleteMessage)
     }
   }, [conversation.id, socket, currentUser.id, router])
 
@@ -113,7 +133,12 @@ const Chat = (
         {
           chat.map((msg: MessageWithSenderAndAttachments, index) => {
             return (
-              <Message currentUser={currentUser} key={index} message={msg} />
+              <Message
+                onDelete={handleDeleteMessage}
+                currentUser={currentUser}
+                key={index}
+                message={msg}
+              />
             )
           })
         }

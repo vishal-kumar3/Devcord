@@ -12,11 +12,19 @@ import { RenderEmojiPicker } from "../Emoji/EmojiPicker";
 import { SOCKET_CONVERSATION } from "@devcord/node-prisma/dist/constants/socket.const";
 import { TypingEvent } from "../Chat/Chat";
 import { User } from "@prisma/client";
+import { deleteMessage } from "@/actions/message.action";
+import { toast } from "sonner";
 
 
 // WIP: implement group message logic
+export type MessageProps = {
+  message: MessageWithSenderAndAttachments
+  currentUser: User
+  onDelete: (messageId: string) => void
+}
 
-const Message = ({ message, currentUser }: { message: MessageWithSenderAndAttachments, currentUser: User }) => {
+
+const Message = ({ message, currentUser, onDelete }: MessageProps) => {
   const [editing, setEditing] = useState<boolean>(false)
   const [msg, setMsg] = useState<string>(message.content || "")
   const [emojiSearch, setEmojiSearch] = useState<string>("")
@@ -160,16 +168,12 @@ const Message = ({ message, currentUser }: { message: MessageWithSenderAndAttach
     adjustTextareaHeight();
   };
 
-  const handleDeleteMessage = () => {
-    
-  }
-
   return (
     <MessageContextMenu
       message={message}
       setEditing={setEdit}
       currentUser={currentUser}
-      onDelete={() => handleDeleteMessage()}
+      onDelete={() => onDelete(message.id)}
     >
       <div className={cn(
         "relative flex group px-4 gap-4 hover:bg-back-two-two transition-colors ease-in-out duration-200 mt-4 pt-1"

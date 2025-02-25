@@ -1,4 +1,4 @@
-import { AddMembersData, createDmConversationData, MessageData, RemoveMembersData, SOCKET_CONVERSATION, SOCKET_EVENTS, TitleChangeData, TypingData } from "@devcord/node-prisma/dist/constants/socket.const.js";
+import { AddMembersData, createDmConversationData, DeleteConversationMessage, MessageData, RemoveMembersData, SOCKET_CONVERSATION, SOCKET_EVENTS, TitleChangeData, TypingData } from "@devcord/node-prisma/dist/constants/socket.const.js";
 import { CustomSocket } from "../socket.js";
 import { Server } from "socket.io";
 import { consumeMessage, produceMessage } from "../services/kafka.service.js";
@@ -11,6 +11,11 @@ export const handleConversationEvents = (socket: CustomSocket, io: Server) => {
   socket.on(SOCKET_CONVERSATION.MESSAGE, (data: MessageData) => {
     produceMessage("chat", data.conversationId, data);
   });
+
+  // Delete Message
+  socket.on(SOCKET_CONVERSATION.DELETE_MESSAGE, (data: DeleteConversationMessage) => {
+    socket.to(data.conversationId).emit(SOCKET_CONVERSATION.DELETE_MESSAGE, data);
+  })
 
   // Typing
   socket.on(SOCKET_CONVERSATION.TYPING, (data: TypingData) => {

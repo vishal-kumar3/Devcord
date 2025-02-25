@@ -55,6 +55,11 @@ export type DeleteConversationMessage = {
   messageId: string
 }
 
+export type DeleteConversationMessageResponse = {
+  error?: string
+  messageId?: string
+}
+
 export const UserStatusType = {
   ONLINE: "online",
   OFFLINE: "offline",

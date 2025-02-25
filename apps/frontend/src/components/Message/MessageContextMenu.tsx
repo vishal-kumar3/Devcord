@@ -17,7 +17,7 @@ export type MessageContextMenuProps = {
 }
 
 
-const MessageContextMenu = ({ message, currentUser, setEditing, children }: MessageContextMenuProps) => {
+const MessageContextMenu = ({ message, currentUser, setEditing, onDelete, children }: MessageContextMenuProps) => {
   return (
     <ContextMenu>
       <ContextMenuTrigger>
@@ -33,7 +33,9 @@ const MessageContextMenu = ({ message, currentUser, setEditing, children }: Mess
             <ContextMenuItem
               onClick={() => setEditing()}
             >Edit Message</ContextMenuItem>
-            <ContextMenuItem>Delete Message</ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => onDelete()}
+            >Delete Message</ContextMenuItem>
           </>
         }
       </ContextMenuContent>
