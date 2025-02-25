@@ -21,10 +21,11 @@ export type MessageProps = {
   message: MessageWithSenderAndAttachments
   currentUser: User
   onDelete: (messageId: string) => void
+  onEdit: (messageId: string, content: string, deleteAttachment: string[]) => void
 }
 
 
-const Message = ({ message, currentUser, onDelete }: MessageProps) => {
+const Message = ({ message, currentUser, onDelete, onEdit }: MessageProps) => {
   const [editing, setEditing] = useState<boolean>(false)
   const [msg, setMsg] = useState<string>(message.content || "")
   const [emojiSearch, setEmojiSearch] = useState<string>("")
@@ -46,7 +47,7 @@ const Message = ({ message, currentUser, onDelete }: MessageProps) => {
   const handleKeyPress = (event) => {
     if (event.key === "Enter" && !event.shiftKey && emojiSearch === '') {
       setEmojiSearch('');
-      handleFormSubmit(event);
+      onEditSave(event);
     }
     if (event.ctrlKey && event.key === 'c' && editing) {
       onEditCancel()
@@ -118,12 +119,12 @@ const Message = ({ message, currentUser, onDelete }: MessageProps) => {
     }
   }
 
-  const handleFormSubmit = (event) => {
+  const onEditSave = (event) => {
     event.preventDefault();
-    if (msg.trim() === '' || msg.trim() === message.content) {
+    if (msg.trim() === message.content && deleteFiles.length === 0) {
       return onEditCancel()
     }
-    // onSave(msg);
+    onEdit(message.id, msg, deleteFiles)
     setEditing(false)
   }
 
@@ -173,7 +174,10 @@ const Message = ({ message, currentUser, onDelete }: MessageProps) => {
       message={message}
       setEditing={setEdit}
       currentUser={currentUser}
-      onDelete={() => onDelete(message.id)}
+      onDelete={() => {
+        onEditCancel()
+        onDelete(message.id)
+      }}
     >
       <div className={cn(
         "relative flex group px-4 gap-4 hover:bg-back-two-two transition-colors ease-in-out duration-200 mt-4 pt-1"
@@ -190,7 +194,7 @@ const Message = ({ message, currentUser, onDelete }: MessageProps) => {
           />
         </div>
         <form
-          onSubmit={handleFormSubmit}
+          onSubmit={onEditSave}
           className="space-y-1 w-full"
         >
           <div className="flex gap-3 items-center">
@@ -244,7 +248,12 @@ const Message = ({ message, currentUser, onDelete }: MessageProps) => {
                 </div>
               </div>
             ) : (
-              <div className="text-text">{message.content}</div>
+              <div className="text-text">
+                {message.content}
+                {
+                  message.editedAt && <span className="text-xs opacity-70 ml-2">(edited)</span>
+                }
+              </div>
             )
           }
           <div className="grid grid-cols-2 gap-2 max-w-[460px]">

@@ -220,10 +220,10 @@ export const SendMessageInput = (
       <div className={cn("flex flex-row items-center gap-2 px-5 h-[20px] transition-all duration-300 w-[calc(100%-270px)]")}>
         {typingUsers.length > 0 && <div className="text-base size-[8px] rounded-full animate-pulse bg-text-highlighted" />}
         {
-          typingUsers.map((user, index) => {
+          typingUsers.map((user) => {
             return (
               <Image
-                key={user.id || index}
+                key={user.id}
                 className="size-[15px] rounded-full"
                 alt={user.name?.slice(0, 1) || user.username?.slice(0, 1) || user.email?.slice(0, 1)}
                 src={user.avatar || "/images/default-profile.png"}

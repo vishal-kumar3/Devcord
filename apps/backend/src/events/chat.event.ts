@@ -1,9 +1,10 @@
-import { AddMembersData, createDmConversationData, DeleteConversationMessage, MessageData, RemoveMembersData, SOCKET_CONVERSATION, SOCKET_EVENTS, TitleChangeData, TypingData } from "@devcord/node-prisma/dist/constants/socket.const.js";
+import { AddMembersData, DeleteConversationMessage, MessageData, RemoveMembersData, SOCKET_CONVERSATION, TitleChangeData, TypingData } from "@devcord/node-prisma/dist/constants/socket.const.js";
 import { CustomSocket } from "../socket.js";
 import { Server } from "socket.io";
 import { consumeMessage, produceMessage } from "../services/kafka.service.js";
 import { ConversationWithUsers } from "@devcord/node-prisma/dist/types/userConversation.types.js";
 import { Conversation } from "@prisma/client";
+import { MessageWithSenderAndAttachments } from "@devcord/node-prisma/dist/types/message.types.js";
 
 
 export const handleConversationEvents = (socket: CustomSocket, io: Server) => {
@@ -15,6 +16,11 @@ export const handleConversationEvents = (socket: CustomSocket, io: Server) => {
   // Delete Message
   socket.on(SOCKET_CONVERSATION.DELETE_MESSAGE, (data: DeleteConversationMessage) => {
     socket.to(data.conversationId).emit(SOCKET_CONVERSATION.DELETE_MESSAGE, data);
+  })
+
+  // Edit Message
+  socket.on(SOCKET_CONVERSATION.EDIT_MESSAGE, (data: MessageWithSenderAndAttachments) => {
+    socket.to(data.conversationId).emit(SOCKET_CONVERSATION.EDIT_MESSAGE, data);
   })
 
   // Typing

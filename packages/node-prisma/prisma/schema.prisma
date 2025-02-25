@@ -303,7 +303,6 @@ model Message {
   content        String?
   senderId       String?
   conversationId String
-  edited         Boolean @default(false)
 
   fileUrl    String?
   duration   Int?
