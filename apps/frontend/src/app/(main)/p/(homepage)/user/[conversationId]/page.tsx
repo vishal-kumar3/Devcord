@@ -31,7 +31,6 @@ export default async function Page({
   return (
     <div className="w-full">
       <Chat chat_message={chat_messages || []} conversation={conversation} currentUser={loggedUser} />
-      {/* <DummyChat chat_message={chat_messages || []} conversationId={conversationId} conversation={conversation} user={loggedUser} /> */}
     </div>
   );
 }

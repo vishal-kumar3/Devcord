@@ -6,13 +6,17 @@ import { Dispatch, SetStateAction } from "react"
 export type ShowMessageFileProps = {
   attachment: Attachment
   isEditOn: boolean
+  onSelecteFile: () => void
   setDeleteFiles: Dispatch<SetStateAction<string[]>>
   children: React.ReactNode
 }
 
-export const ShowMessageFile = ({ attachment, isEditOn, setDeleteFiles, children }: ShowMessageFileProps) => {
+export const ShowMessageFile = ({ attachment, isEditOn, onSelecteFile, setDeleteFiles, children }: ShowMessageFileProps) => {
   return (
-    <div className="relative h-[220px] w-[220px] overflow-hidden">
+    <div
+      onClick={onSelecteFile}
+      className="relative h-[220px] w-[220px] overflow-hidden"
+    >
       {
         isEditOn && (
           <div className="flex absolute top-2 right-2 items-center">

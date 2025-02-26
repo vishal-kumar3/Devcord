@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { setSocketMetadata } from "../../lib/socket.config"
 import ChatHeader from "./ChatHeader"
 import Message from "../Message/Message"
@@ -108,12 +108,11 @@ const Chat = (
     }
   }, [conversation.id, socket, currentUser.id, router])
 
-  useEffect(() => {
-    // WIP: Scroll only when user sends msg not when recieves -> just show down arrow you recieved number of msg
+  useLayoutEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [chat]);
+  }, []);
 
   return (
     <div
@@ -142,20 +141,22 @@ const Chat = (
         style={{ gridArea: "main" }}
         ref={chatContainerRef}
       >
-        <div className="w-full flex-1 min-h-[50px]"></div>
-        {
-          chat.map((msg: MessageWithSenderAndAttachments) => {
-            return (
-              <Message
-                onEdit={onEditMessage}
-                onDelete={handleDeleteMessage}
-                currentUser={currentUser}
-                key={msg.id}
-                message={msg}
-              />
-            )
-          })
-        }
+        <div className="flex-1 min-h-[40px]"></div>
+        {/* <div className="flex flex-col overflow-y-scroll"> */}
+          {
+            chat.map((msg: MessageWithSenderAndAttachments) => {
+              return (
+                <Message
+                  onEdit={onEditMessage}
+                  onDelete={handleDeleteMessage}
+                  currentUser={currentUser}
+                  key={msg.id}
+                  message={msg}
+                />
+              )
+            })
+          }
+        {/* </div> */}
       </main>
       <SendMessageInput currentUser={currentUser} conversationId={conversation.id} handleMessageSend={handleMessageSend} />
     </div>

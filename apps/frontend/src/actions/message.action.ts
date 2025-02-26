@@ -11,6 +11,9 @@ export const getMessageByConversationId = async (conversationId: string) => {
     include: {
       sender: true,
       attachment: true
+    },
+    orderBy: {
+      createdAt: "asc"
     }
   }).catch((e) => {
     return null

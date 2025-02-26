@@ -12,8 +12,7 @@ import { RenderEmojiPicker } from "../Emoji/EmojiPicker";
 import { SOCKET_CONVERSATION } from "@devcord/node-prisma/dist/constants/socket.const";
 import { TypingEvent } from "../Chat/Chat";
 import { User } from "@prisma/client";
-import { deleteMessage } from "@/actions/message.action";
-import { toast } from "sonner";
+import AttachmentViewer from "../AttachmentFiles/AttachmentViewer";
 
 
 // WIP: implement group message logic
@@ -34,6 +33,9 @@ const Message = ({ message, currentUser, onDelete, onEdit }: MessageProps) => {
   const [emojiSearchPosition, setEmojiSearchPosition] = useState({ top: 0 });
   const [deleteFiles, setDeleteFiles] = useState<string[]>([])
   const { socket } = useSocket()
+
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
+
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyPress)
@@ -170,117 +172,129 @@ const Message = ({ message, currentUser, onDelete, onEdit }: MessageProps) => {
   };
 
   return (
-    <MessageContextMenu
-      message={message}
-      setEditing={setEdit}
-      currentUser={currentUser}
-      onDelete={() => {
-        onEditCancel()
-        onDelete(message.id)
-      }}
-    >
-      <div className={cn(
-        "relative flex group px-4 gap-4 hover:bg-back-two-two transition-colors ease-in-out duration-200 mt-4 pt-1"
-      )}>
+    <div className="relative">
+      <MessageContextMenu
+        message={message}
+        setEditing={setEdit}
+        currentUser={currentUser}
+        onDelete={() => {
+          onEditCancel()
+          onDelete(message.id)
+        }}
+      >
         <div className={cn(
-          "rounded-full overflow-hidden size-[40px]"
+          "relative flex group px-4 gap-4 hover:bg-back-two-two transition-colors ease-in-out duration-200 mt-4 pt-1"
         )}>
-          <Image
-            src={message.sender?.avatar || "/images/avatar.png"}
-            className="rounded-full size-[40px] cursor-pointer"
-            alt="avatar"
-            width={40}
-            height={40}
-          />
-        </div>
-        <form
-          onSubmit={onEditSave}
-          className="space-y-1 w-full"
-        >
-          <div className="flex gap-3 items-center">
-            <div className="text-text text-message-username font-semibold hover:underline cursor-pointer">
-              {message.sender?.name}
-            </div>
-            <div className="text-message-time text-text-muted">
-              {formatDate(message.createdAt)}
-            </div>
+          <div className={cn(
+            "rounded-full overflow-hidden size-[40px]"
+          )}>
+            <Image
+              src={message.sender?.avatar || "/images/avatar.png"}
+              className="rounded-full size-[40px] cursor-pointer"
+              alt="avatar"
+              width={40}
+              height={40}
+            />
           </div>
-          {
-            editing ? (
-              <div className="relative w-full">
-                <EmojiSuggestions
-                  isOpen={!!emojiSearch}
-                  query={emojiSearch.toLocaleLowerCase()}
-                  onSelect={(emoji) => {
-                    insertEmoji(emoji)
-                  }}
-                  onClose={() => setEmojiSearch('')}
-                  position={emojiSearchPosition}
-                />
-                <div className="relative">
-                  <textarea
-                    autoComplete="off"
-                    ref={textareaRef}
-                    value={msg}
-                    name="msg"
-                    onChange={handleChange}
-                    onKeyDown={handleKeyPress}
-                    className="w-full h-auto bg-back-one rounded-xl text-gray-100 outline-none resize-none px-3 py-2 min-h-[40px] max-h-[50vh] overflow-y-auto"
-                    style={{
-                      lineHeight: '1.375rem',
+          <form
+            onSubmit={onEditSave}
+            className="space-y-1 w-full"
+          >
+            <div className="flex gap-3 items-center">
+              <div className="text-text text-message-username font-semibold hover:underline cursor-pointer">
+                {message.sender?.name}
+              </div>
+              <div className="text-message-time text-text-muted">
+                {formatDate(message.createdAt)}
+              </div>
+            </div>
+            {
+              editing ? (
+                <div className="relative w-full">
+                  <EmojiSuggestions
+                    isOpen={!!emojiSearch}
+                    query={emojiSearch.toLocaleLowerCase()}
+                    onSelect={(emoji) => {
+                      insertEmoji(emoji)
                     }}
+                    onClose={() => setEmojiSearch('')}
+                    position={emojiSearchPosition}
                   />
-                  <div className="flex gap-2 text-sm">
-                    <div>
-                      <span>ctrl + c to </span>
-                      <button onClick={onEditCancel} className="text-red-500 hover:underline">cancel</button>
-                    </div>
-                    <div>
-                      <span>enter to </span>
-                      <button type="submit" className="text-text-success hover:underline">save</button>
+                  <div className="relative">
+                    <textarea
+                      autoComplete="off"
+                      ref={textareaRef}
+                      value={msg}
+                      name="msg"
+                      onChange={handleChange}
+                      onKeyDown={handleKeyPress}
+                      className="w-full h-auto bg-back-one rounded-xl text-gray-100 outline-none resize-none px-3 py-2 min-h-[40px] max-h-[50vh] overflow-y-auto"
+                      style={{
+                        lineHeight: '1.375rem',
+                      }}
+                    />
+                    <div className="flex gap-2 text-sm">
+                      <div>
+                        <span>ctrl + c to </span>
+                        <button onClick={onEditCancel} className="text-red-500 hover:underline">cancel</button>
+                      </div>
+                      <div>
+                        <span>enter to </span>
+                        <button type="submit" className="text-text-success hover:underline">save</button>
+                      </div>
                     </div>
                   </div>
+                  <div className="absolute top-0 right-0">
+                    <RenderEmojiPicker
+                      onSelect={(emoji) => insertEmoji(emoji)}
+                    />
+                  </div>
                 </div>
-                <div className="absolute top-0 right-0">
-                  <RenderEmojiPicker
-                    onSelect={(emoji) => insertEmoji(emoji)}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="text-text">
-                {message.content}
-                {
-                  message.editedAt && <span className="text-xs opacity-70 ml-2">(edited)</span>
-                }
-              </div>
-            )
-          }
-          <div className="grid grid-cols-2 gap-2 max-w-[460px]">
-            {message.attachment?.map((attachment) => {
-              if (deleteFiles.includes(attachment.id)) return null
-              return (
-                <ShowMessageFile
-                  key={attachment.id}
-                  isEditOn={editing}
-                  attachment={attachment}
-                  setDeleteFiles={setDeleteFiles}
-                >
+              ) : (
+                <div className="text-text">
+                  {message.content}
                   {
-                    attachment.contentType.includes("image") ?
-                      <ShowMessageImage attachment={attachment} />
-                      : attachment.contentType.includes("video") ?
-                        <ShowMessageVideo attachment={attachment} />
-                        : <div className="text-text-muted">{attachment.filename}</div>
+                    message.editedAt && <span className="text-xs opacity-70 ml-2">(edited)</span>
                   }
-                </ShowMessageFile>
+                </div>
               )
-            })}
-          </div>
-        </form>
-        <ReactionButtons />
-      </div>
-    </MessageContextMenu>
+            }
+            <div className="grid grid-cols-2 gap-2 max-w-[460px]">
+              {message.attachment?.map((attachment) => {
+                if (deleteFiles.includes(attachment.id)) return null
+                return (
+                  <ShowMessageFile
+                    key={attachment.id}
+                    isEditOn={editing}
+                    onSelecteFile={() => {
+                      if(!editing) setSelectedIndex(message.attachment.indexOf(attachment))
+                    }}
+                    attachment={attachment}
+                    setDeleteFiles={setDeleteFiles}
+                  >
+                    {
+                      attachment.contentType.includes("image") ?
+                        <ShowMessageImage attachment={attachment} />
+                        : attachment.contentType.includes("video") ?
+                          <ShowMessageVideo attachment={attachment} />
+                          : <div className="text-text-muted">{attachment.filename}</div>
+                    }
+                  </ShowMessageFile>
+                )
+              })}
+            </div>
+          </form>
+          <ReactionButtons />
+        </div>
+      </MessageContextMenu>
+      <AttachmentViewer
+        attachments={message.attachment}
+        currentIndex={selectedIndex}
+        isOpen={selectedIndex !== -1 && !editing}
+        onClose={() => setSelectedIndex(-1)}
+        onNavigate={(index) => setSelectedIndex(index)}
+      />
+    </div>
   )
 }
 

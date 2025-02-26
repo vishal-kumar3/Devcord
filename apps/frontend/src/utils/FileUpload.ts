@@ -1,9 +1,8 @@
 "use server"
 import fs from 'fs'
-import { IKUploadResponse } from 'imagekitio-next/dist/types/components/IKUpload/props';
 import path from 'path';
 import { AttachmentData } from '@devcord/node-prisma/dist/constants/socket.const';
-import { imagekit } from '@/app/api/imagekit/auth/route';
+import { imagekit } from '@/lib/imagekit.config';
 
 
 type fileUploadType = {

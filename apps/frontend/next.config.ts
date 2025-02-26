@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactStrictMode: false,
   experimental: {
-  //   reactCompiler: true,
+    // reactCompiler: true,
     serverActions: {
       bodySizeLimit: '10mb',
     }

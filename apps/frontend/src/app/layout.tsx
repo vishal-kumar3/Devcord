@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "../components/theme-provider";
 import { Toaster } from "sonner";
 import { Poppins, Kode_Mono, Inconsolata } from 'next/font/google'
+import Script from "next/script";
 
 const inconsolata = Inconsolata({
   subsets: ['latin'],
@@ -34,6 +35,12 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script
+          crossOrigin="anonymous"
+          src="//unpkg.com/react-scan/dist/auto.global.js"
+        />
+      </head>
       <body
         className={`antialiased`}
       >
