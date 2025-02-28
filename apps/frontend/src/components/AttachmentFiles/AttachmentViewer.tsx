@@ -34,23 +34,63 @@ const AttachmentViewer = ({ attachments, currentIndex, isOpen, onClose, onNaviga
   if (currentIndex < 0 || currentIndex >= attachments.length) {
     return null;
   }
+  const isThirdAttachment = !attachments[currentIndex].contentType.includes("image") && !attachments[currentIndex].contentType.includes("video") && !attachments[currentIndex].contentType.includes("audio")
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="bg-transparent border-none p-0 w-auto max-w-[90vw] h-[90vh] backdrop-blur-md"
+        className="bg-transparent border-none outline-none p-0 w-auto max-w-[90vw] h-[90vh] backdrop-blur-md"
       >
         <div className="relative flex items-center justify-center">
           <DialogHeader>
             <DialogTitle></DialogTitle>
           </DialogHeader>
-          <Image
-            src={attachments[currentIndex].url}
-            alt={attachments[currentIndex].filename}
-            width={attachments[currentIndex].width || 800}
-            height={attachments[currentIndex].height || 600}
-            className="object-contain rounded-md max-h-[90vh] max-w-[90vw]"
-          />
+          {
+            attachments[currentIndex].contentType.startsWith('image') && (
+              <Image
+                src={attachments[currentIndex].url}
+                alt={attachments[currentIndex].filename}
+                width={attachments[currentIndex].width || 800}
+                height={attachments[currentIndex].height || 600}
+                className="object-contain rounded-md max-h-[90vh] max-w-[90vw]"
+              />
+            )
+          }
+          {
+            attachments[currentIndex].contentType.startsWith('video') && (
+              <video
+                src={attachments[currentIndex].url}
+                width={attachments[currentIndex].width || 800}
+                height={attachments[currentIndex].height || 600}
+                controls
+                className="object-contain rounded-md max-h-[90vh] max-w-[90vw]"
+              />
+            )
+          }
+          {
+            attachments[currentIndex].contentType.startsWith('audio') && (
+              <audio
+                src={attachments[currentIndex].url}
+                controls
+                className="object-contain rounded-md max-h-[90vh] max-w-[90vw]"
+              />
+            )
+          }
+          {
+            isThirdAttachment && (
+              <a
+                href={attachments[currentIndex].url}
+                target="_blank"
+                rel="noreferrer"
+                download
+                className="object-contain rounded-md max-h-[90vh] max-w-[90vw]"
+              >
+                <div>
+                  {attachments[currentIndex].filename}
+                </div>
+              </a>
+            )
+          }
         </div>
         <div
           className="fixed inset-0 flex items-center justify-between pointer-events-none z-[60]"

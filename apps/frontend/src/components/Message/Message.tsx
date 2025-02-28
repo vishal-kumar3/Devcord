@@ -3,7 +3,7 @@ import { cn } from "@/lib/cn"
 import { formatDate } from "@/utils/date_time"
 import { MessageWithSenderAndAttachments } from "@devcord/node-prisma/dist/types/message.types";
 import Image from "next/image"
-import { ShowMessageFile, ShowMessageImage, ShowMessageVideo } from "./ShowMessageFile";
+import { ShowMessageFile, ShowMessageImage, ShowMessageVideo, ShowOtherFiles } from "./ShowMessageFile";
 import MessageContextMenu from "./MessageContextMenu";
 import { useEffect, useRef, useState } from "react";
 import { useSocket } from "@/providers/socket.provider";
@@ -262,22 +262,24 @@ const Message = ({ message, currentUser, onDelete, onEdit }: MessageProps) => {
             <div className="grid grid-cols-2 gap-2 max-w-[460px]">
               {message.attachment?.map((attachment) => {
                 if (deleteFiles.includes(attachment.id)) return null
+                const isThirdAttachment = !attachment.contentType.includes("image") && !attachment.contentType.includes("video") && !attachment.contentType.includes("audio")
                 return (
                   <ShowMessageFile
                     key={attachment.id}
                     isEditOn={editing}
                     onSelecteFile={() => {
-                      if(!editing) setSelectedIndex(message.attachment.indexOf(attachment))
+                      if (!editing && !isThirdAttachment) setSelectedIndex(message.attachment.indexOf(attachment))
                     }}
                     attachment={attachment}
                     setDeleteFiles={setDeleteFiles}
                   >
                     {
-                      attachment.contentType.includes("image") ?
-                        <ShowMessageImage attachment={attachment} />
-                        : attachment.contentType.includes("video") ?
-                          <ShowMessageVideo attachment={attachment} />
-                          : <div className="text-text-muted">{attachment.filename}</div>
+                      isThirdAttachment ? <ShowOtherFiles isEditing={editing} attachment={attachment} />
+                        :  attachment.contentType.includes("image") ?
+                          <ShowMessageImage attachment={attachment} />
+                          : attachment.contentType.includes("video") ?
+                            <ShowMessageVideo attachment={attachment} />
+                            : null
                     }
                   </ShowMessageFile>
                 )

@@ -1,3 +1,4 @@
+import { cn } from "@/lib/cn"
 import { Attachment } from "@prisma/client"
 import Image from "next/image"
 import { Dispatch, SetStateAction } from "react"
@@ -8,14 +9,18 @@ export type ShowMessageFileProps = {
   isEditOn: boolean
   onSelecteFile: () => void
   setDeleteFiles: Dispatch<SetStateAction<string[]>>
+  className?: string
   children: React.ReactNode
 }
 
-export const ShowMessageFile = ({ attachment, isEditOn, onSelecteFile, setDeleteFiles, children }: ShowMessageFileProps) => {
+export const ShowMessageFile = ({ attachment, isEditOn, onSelecteFile, setDeleteFiles, className, children }: ShowMessageFileProps) => {
   return (
     <div
       onClick={onSelecteFile}
-      className="relative h-[220px] w-[220px] overflow-hidden"
+      className={cn(
+        "relative h-[220px] w-[220px] overflow-hidden",
+        className
+      )}
     >
       {
         isEditOn && (
@@ -63,5 +68,27 @@ export const ShowMessageVideo = ({ attachment }: { attachment: Attachment }) => 
         width={attachment.width!}
       />
     </video>
+  )
+}
+
+export const ShowOtherFiles = ({ attachment, isEditing }: { attachment: Attachment, isEditing: boolean }) => {
+  return (
+    <div className="group/inner bg-neutral-800/40 hover:bg-neutral-800/60 rounded-xl w-full h-full">
+      <div className="text-text-muted px-2 w-full h-full flex items-center">{attachment.filename}</div>
+      {
+        !isEditing && (
+          <div className="opacity-0 group-hover/inner:opacity-100 absolute bg-neutral-400 rounded-sm transition-all ease-in-out top-1 right-2 size-7">
+            <Image
+              src='/icons/File_Download.svg'
+              alt={attachment.filename}
+              onClick={() => window.open(attachment.url, '_blank')}
+              className="object-cover rounded-sm cursor-pointer aspect-square hover:bg-neutral-500"
+              width={30}
+              height={30}
+            />
+          </div>
+        )
+      }
+    </div>
   )
 }
