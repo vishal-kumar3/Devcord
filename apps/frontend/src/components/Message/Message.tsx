@@ -13,6 +13,7 @@ import { SOCKET_CONVERSATION } from "@devcord/node-prisma/dist/constants/socket.
 import { TypingEvent } from "../Chat/Chat";
 import { User } from "@prisma/client";
 import AttachmentViewer from "../AttachmentFiles/AttachmentViewer";
+import ReactionTab, { MessageReactions } from "./Reaction";
 
 
 // WIP: implement group message logic
@@ -21,10 +22,11 @@ export type MessageProps = {
   currentUser: User
   onDelete: (messageId: string) => void
   onEdit: (messageId: string, content: string, deleteAttachment: string[]) => void
+  onReaction: (messasgeId: string, emoji: string) => void
 }
 
 
-const Message = ({ message, currentUser, onDelete, onEdit }: MessageProps) => {
+const Message = ({ message, currentUser, onDelete, onEdit, onReaction }: MessageProps) => {
   const [editing, setEditing] = useState<boolean>(false)
   const [msg, setMsg] = useState<string>(message.content || "")
   const [emojiSearch, setEmojiSearch] = useState<string>("")
@@ -171,6 +173,10 @@ const Message = ({ message, currentUser, onDelete, onEdit }: MessageProps) => {
     adjustTextareaHeight();
   };
 
+  const onReactionClick = (emoji: string) => {
+    onReaction(message.id, emoji)
+  }
+
   return (
     <div className="relative">
       <MessageContextMenu
@@ -255,7 +261,8 @@ const Message = ({ message, currentUser, onDelete, onEdit }: MessageProps) => {
                   {message.content}
                   {
                     message.editedAt && <span className="text-xs opacity-70 ml-2">(edited)</span>
-                  }
+                    }
+                    <MessageReactions reactions={message.reactions ?? []} />
                 </div>
               )
             }
@@ -286,7 +293,7 @@ const Message = ({ message, currentUser, onDelete, onEdit }: MessageProps) => {
               })}
             </div>
           </form>
-          <ReactionButtons />
+          <ReactionTab onReactionClick={onReactionClick} />
         </div>
       </MessageContextMenu>
       <AttachmentViewer
@@ -300,22 +307,7 @@ const Message = ({ message, currentUser, onDelete, onEdit }: MessageProps) => {
   )
 }
 
-export const ReactionButtons = ({ }) => {
 
-  return (
-    <div className="absolute -top-3 right-4 bg-back-one w-[200px] h-[20px] group-hover:opacity-100 opacity-0 transition-opacity duration-150 rounded-md flex justify-evenly items-center">
-      <button className="text-white">👍</button>
-      <button className="text-white">❤️</button>
-      <button className="text-white">🔥</button>
-    </div>
-  )
-}
-
-export const ReactionButton = ({ emoji }: { emoji: string }) => {
-  return (
-    <button className="">{emoji}</button>
-  )
-}
 
 
 export default Message

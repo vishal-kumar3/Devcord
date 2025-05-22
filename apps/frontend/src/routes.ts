@@ -10,7 +10,6 @@ export const publicRoutes: (string | RegExp)[] = [
   // "/cookies",
   // /^\/blog\/[a-zA-Z0-9]+$/,
   // /^\/user\/[a-zA-Z0-9]+$/,
-  "/",
 ];
 
 /**

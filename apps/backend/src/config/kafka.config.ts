@@ -10,6 +10,19 @@ export const kafka = new Kafka({
   }
 })
 
+// create topic 'chat' if it doesn't exist
+const admin = kafka.admin()
+const existingTpoics = await admin.listTopics()
+if (!existingTpoics.includes('chat')) {
+  await admin.createTopics({
+    topics: [{
+      topic: 'chat',
+      numPartitions: 1,
+      replicationFactor: 1,
+    }],
+  })
+}
+
 let producer = null;
 
 export const createProducer = async () => {

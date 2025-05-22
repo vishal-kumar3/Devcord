@@ -1,10 +1,24 @@
-import { AddMembersData, DeleteConversationMessage, MessageData, RemoveMembersData, SOCKET_CONVERSATION, TitleChangeData, TypingData } from "@devcord/node-prisma/dist/constants/socket.const.js";
+import {
+  AddMembersData,
+  DeleteConversationMessage,
+  MessageData,
+  RemoveMembersData,
+  SOCKET_CONVERSATION,
+  TitleChangeData,
+  TypingData
+} from "@devcord/node-prisma/dist/constants/socket.const.js";
 import { CustomSocket } from "../socket.js";
 import { Server } from "socket.io";
-import { consumeMessage, produceMessage } from "../services/kafka.service.js";
+import {
+  consumeMessage,
+  produceMessage
+} from "../services/kafka.service.js";
 import { ConversationWithUsers } from "@devcord/node-prisma/dist/types/userConversation.types.js";
 import { Conversation } from "@prisma/client";
-import { MessageWithSenderAndAttachments } from "@devcord/node-prisma/dist/types/message.types.js";
+import {
+  MessageWithSenderAndAttachments,
+  ReactConversationMessage
+} from "@devcord/node-prisma/dist/types/message.types.js";
 
 
 export const handleConversationEvents = (socket: CustomSocket, io: Server) => {
@@ -21,6 +35,11 @@ export const handleConversationEvents = (socket: CustomSocket, io: Server) => {
   // Edit Message
   socket.on(SOCKET_CONVERSATION.EDIT_MESSAGE, (data: MessageWithSenderAndAttachments) => {
     socket.to(data.conversationId).emit(SOCKET_CONVERSATION.EDIT_MESSAGE, data);
+  })
+
+  // React to Message
+  socket.on(SOCKET_CONVERSATION.REACT_MESSAGE, (data: ReactConversationMessage) => {
+    socket.to(data.conversationId).emit(SOCKET_CONVERSATION.REACT_MESSAGE, data)
   })
 
   // Typing

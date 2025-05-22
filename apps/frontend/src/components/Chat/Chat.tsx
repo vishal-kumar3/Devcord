@@ -10,10 +10,11 @@ import { DeleteConversationMessage, MessageData, RemoveMembersData, SOCKET_CONVE
 import { SendMessageInput } from "../MessageInput/SendMessageInput"
 import { useSocket } from "@/providers/socket.provider"
 import { ConversationWithMembers } from "@devcord/node-prisma/dist/types/conversation.types"
-import { MessageWithSenderAndAttachments } from "@devcord/node-prisma/dist/types/message.types"
+import { MessageWithSenderAndAttachments, ReactConversationMessage } from "@devcord/node-prisma/dist/types/message.types"
 import { useRouter } from "next/navigation"
 import { checkMembership } from "@/actions/userConversation.action"
-import { deleteMessage, editMessage } from "@/actions/message.action"
+import { deleteMessage, editMessage, reactToMessage } from "@/actions/message.action"
+import { getEmojiFromNative } from "@/utils/emoji"
 
 export type TypingEvent = {
   user: User
@@ -68,6 +69,21 @@ const Chat = (
     }
   }
 
+  const onReactionClick = async (messageId: string, reaction: string) => {
+    // find the emojiId
+    const emoji = await getEmojiFromNative(reaction)
+    const { message, error } = await reactToMessage(messageId, emoji)
+
+    if (message) {
+      setChat((prevChat) => prevChat.map((msg) => msg.id === messageId ? message : msg))
+      socket?.emit(SOCKET_CONVERSATION.REACT_MESSAGE, {
+        conversationId: conversation.id,
+        messageId: message.id,
+        msg: message
+      } as ReactConversationMessage)
+    }
+  }
+
   useEffect(() => {
     if (!socket) return
     socket.connect()
@@ -95,16 +111,24 @@ const Chat = (
       }
     }
 
+    const handleReactMessage = (data: ReactConversationMessage) => {
+      if (data.conversationId === conversation.id) {
+        setChat((prevChat) => prevChat.map((msg) => msg.id === data.messageId ? data.msg : msg ))
+      }
+    }
+
     socket.on(SOCKET_CONVERSATION.REMOVE_MEMBERS, handleRemoveMembers)
     socket.on(SOCKET_CONVERSATION.MESSAGE, handleMessage)
     socket.on(SOCKET_CONVERSATION.DELETE_MESSAGE, handleDeleteMessage)
     socket.on(SOCKET_CONVERSATION.EDIT_MESSAGE, handleEditMessage)
+    socket.on(SOCKET_CONVERSATION.REACT_MESSAGE, handleReactMessage)
 
     return () => {
       socket.off(SOCKET_CONVERSATION.MESSAGE, handleMessage)
       socket.off(SOCKET_CONVERSATION.REMOVE_MEMBERS, handleRemoveMembers)
       socket.off(SOCKET_CONVERSATION.DELETE_MESSAGE, handleDeleteMessage)
       socket.off(SOCKET_CONVERSATION.EDIT_MESSAGE, handleEditMessage)
+      socket.off(SOCKET_CONVERSATION.REACT_MESSAGE, handleReactMessage)
     }
   }, [conversation.id, socket, currentUser.id, router])
 
@@ -149,6 +173,7 @@ const Chat = (
                 <Message
                   onEdit={onEditMessage}
                   onDelete={handleDeleteMessage}
+                  onReaction={onReactionClick}
                   currentUser={currentUser}
                   key={msg.id}
                   message={msg}

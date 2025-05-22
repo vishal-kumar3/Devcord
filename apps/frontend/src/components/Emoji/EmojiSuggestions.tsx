@@ -3,6 +3,7 @@ import data, { Emoji } from '@emoji-mart/data';
 import { init, SearchIndex } from 'emoji-mart';
 import { useEffect, useState } from 'react';
 import { DevCommandPallet } from '../DevCommandPallet';
+import { fetchEmojisSuggestions } from '../../utils/emoji';
 
 interface EmojiSuggestionsProps {
   isOpen: boolean;
@@ -21,10 +22,7 @@ export function EmojiSuggestions({ query, onSelect, onClose, position, isOpen }:
   useEffect(() => {
     if (!query || query.length < 1) return setFilteredEmojis([])
     const fetchEmojis = async () => {
-      const allEmojis = (await SearchIndex.search(query, {
-        maxResults: 10,
-        caller: 'EmojiSuggestions'
-      })) as Emoji[]
+      const allEmojis = await fetchEmojisSuggestions(query)
       if (allEmojis.length > 0) setIsCommandOpen(true)
       setFilteredEmojis(allEmojis)
     }

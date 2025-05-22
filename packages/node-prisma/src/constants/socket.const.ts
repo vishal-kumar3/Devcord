@@ -1,5 +1,6 @@
 import { FriendRequest, User } from "@prisma/client"
 import { UserConversationWithUser } from "../types/userConversation.types"
+import { NativeEmoji } from "../types/message.types"
 
 export type TitleChangeData = {
   conversationId: string
@@ -92,6 +93,7 @@ export const SOCKET_USER_STATUS = {
 
 export const SOCKET_CONVERSATION = {
   EDIT_MESSAGE: "edit-message-conversation",
+  REACT_MESSAGE: "react-message-conversation",
   DELETE_MESSAGE: "delete-message-conversation",
   MESSAGE: "message-conversation",
   TYPING: "typing-conversation",

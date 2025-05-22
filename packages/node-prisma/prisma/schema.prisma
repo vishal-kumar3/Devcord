@@ -1,7 +1,6 @@
 // ---------- GENERATORS & DATASOURCES ----------
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["prismaSchemaFolder"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -27,7 +26,7 @@ model User {
   memberships            ProjectMember[]
   conversations          UserConversation[]
   messages               Message[]
-  reactions              Reaction[]
+  reactions              Reaction[]         @relation("ReactionUsers")
   friendRequestsSent     FriendRequest[]    @relation("FriendRequestsSent")
   friendRequestsReceived FriendRequest[]    @relation("FriendRequestsReceived")
 
@@ -394,22 +393,21 @@ model EmbedField {
 }
 
 model Reaction {
-  messageId  String
-  emojiId    String  @db.VarChar(20) // Made required to work with the composite key
-  emojiName  String  @db.VarChar(32)
-  count      Int     @default(0)
-  burstCount Int     @default(0)
-  me         Boolean @default(false)
-  burstMe    Boolean @default(false)
+  id          String  @id @default(cuid())
+  messageId   String
+  emojiId     String  @db.VarChar(20)
+  emojiName   String  @db.VarChar(32)
+  emojiNative String
+  count       Int     @default(1)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
   message Message @relation(fields: [messageId], references: [id])
-  user    User?   @relation(fields: [emojiId], references: [id])
+  users    User[]  @relation("ReactionUsers")
 
-  @@id([messageId, emojiId, emojiName])
+  @@unique([messageId, emojiId])
   @@index([emojiId, emojiName])
 }
 
