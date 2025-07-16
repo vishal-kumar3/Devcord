@@ -1,7 +1,7 @@
 import { Server, Socket } from "socket.io";
 import {
   SOCKET_EVENTS,
-} from "@devcord/node-prisma/dist/constants/socket.const.js"
+} from "@devcord/node-prisma/constants/socket.const.js"
 import { handleFriendEvents } from "./events/friend.socket.js";
 import { handleConversationEvents } from "./events/chat.event.js";
 

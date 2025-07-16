@@ -1,4 +1,4 @@
-import { FriendRquestData, SOCKET_FRIEND } from "@devcord/node-prisma/dist/constants/socket.const.js";
+import { FriendRquestData, SOCKET_FRIEND } from "@devcord/node-prisma/constants/socket.const.js";
 import { CustomSocket } from "../socket.js";
 import { Server} from "socket.io"
 

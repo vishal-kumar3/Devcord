@@ -6,19 +6,19 @@ import {
   SOCKET_CONVERSATION,
   TitleChangeData,
   TypingData
-} from "@devcord/node-prisma/dist/constants/socket.const.js";
+} from "@devcord/node-prisma/constants/socket.const.js";
 import { CustomSocket } from "../socket.js";
 import { Server } from "socket.io";
 import {
   consumeMessage,
   produceMessage
 } from "../services/kafka.service.js";
-import { ConversationWithUsers } from "@devcord/node-prisma/dist/types/userConversation.types.js";
+import { ConversationWithUsers } from "@devcord/node-prisma/types/userConversation.types.js";
 import { Conversation } from "@prisma/client";
 import {
   MessageWithSenderAndAttachments,
   ReactConversationMessage
-} from "@devcord/node-prisma/dist/types/message.types.js";
+} from "@devcord/node-prisma/types/message.types.js";
 
 
 export const handleConversationEvents = (socket: CustomSocket, io: Server) => {

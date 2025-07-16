@@ -1,6 +1,6 @@
 import { FriendRequest, User } from "@prisma/client"
-import { UserConversationWithUser } from "../types/userConversation.types"
-import { NativeEmoji } from "../types/message.types"
+import { UserConversationWithUser } from "../types/userConversation.types.js"
+import { NativeEmoji } from "../types/message.types.js"
 
 export type TitleChangeData = {
   conversationId: string
