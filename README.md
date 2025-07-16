@@ -121,14 +121,39 @@ devcord/
 
 ### Prerequisites
 
-- **Node.js** (v18 or higher)
-- **pnpm** (v9.0.0 or higher)
-- **Docker** and **Docker Compose**
-- **PostgreSQL** database
-- **Redis** server
-- **Apache Kafka** (optional, for message streaming)
+- **Docker** and **Docker Compose** (recommended)
+- **Node.js** (v18 or higher) - if running without Docker
+- **pnpm** (v9.0.0 or higher) - if running without Docker
 
-### Installation
+### Quick Start with Docker (Recommended)
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/devcord.git
+   cd devcord
+   ```
+
+2. **Set up environment variables**
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local with your configuration
+   ```
+
+3. **Start development environment**
+   ```bash
+   make dev
+   # or
+   docker-compose up --build
+   ```
+
+The application will be available at:
+- **Frontend**: http://localhost:3000
+- **Backend**: http://localhost:8000
+- **PostgreSQL**: localhost:5432
+- **Redis**: localhost:6379
+- **Kafka**: localhost:9092
+
+### Manual Installation (Without Docker)
 
 1. **Clone the repository**
    ```bash
@@ -280,6 +305,34 @@ Ensure all required environment variables are set in production:
 - CORS origins
 
 ## Troubleshooting
+
+### Docker Issues
+
+1. **Port conflicts**
+   ```bash
+   # Check if ports are in use
+   lsof -i :3000
+   lsof -i :8000
+   lsof -i :5432
+   ```
+
+2. **Permission issues**
+   ```bash
+   # Fix script permissions
+   chmod +x scripts/*.sh
+   ```
+
+3. **Database migration issues**
+   ```bash
+   # Run migrations manually
+   docker-compose exec devcord-dev pnpm --filter @devcord/node-prisma prisma:migrate:dev
+   ```
+
+4. **Clean slate restart**
+   ```bash
+   make clean
+   make dev
+   ```
 
 ### Common Issues
 
