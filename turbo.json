@@ -5,11 +5,10 @@
     "build": {
       "dependsOn": [
         "^build",
-        "prisma:generate",
-        "prisma:migrate"
+        "prisma:generate"
       ],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "start": {
       "dependsOn": [
@@ -24,13 +23,23 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "dependsOn": [
+        "prisma:generate",
+        "prisma:migrate:dev"
+      ]
     },
     "prisma:generate": {
-      "cache": false
+      "cache": false,
+      "dependsOn": []
     },
-    "prisma:migrate": {
-      "cache": false
+    "prisma:migrate:dev": {
+      "cache": false,
+      "dependsOn": ["prisma:generate"]
+    },
+    "prisma:migrate:deploy": {
+      "cache": false,
+      "dependsOn": ["prisma:generate"]
     }
   }
 }

@@ -3,11 +3,15 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
+    "build:prod": "turbo prisma:generate && turbo prisma:migrate:deploy && turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "preinstall": "npx only-allow pnpm",
-    "start": "turbo start"
+    "start": "turbo start",
+    "deploy": "pnpm build:prod && pnpm start",
+    "db:migrate": "turbo prisma:migrate:deploy",
+    "db:generate": "turbo prisma:generate"
   },
   "devDependencies": {
     "prettier": "^3.5.0",

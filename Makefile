@@ -1,6 +1,6 @@
 # Makefile for Devcord Docker operations
 
-.PHONY: help dev prod stop clean logs
+.PHONY: help dev prod stop clean logs deploy
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -43,3 +43,16 @@ db-shell: ## Access database shell
 
 redis-shell: ## Access Redis shell
 	@docker-compose exec redis redis-cli
+
+deploy: ## Deploy the application
+	@echo "🚀 Deploying Devcord..."
+	@chmod +x scripts/deploy.sh
+	@./scripts/deploy.sh
+
+build-prod: ## Build for production with migrations
+	@echo "🏗️  Building for production..."
+	@pnpm build:prod
+
+start-prod: ## Start production servers
+	@echo "▶️  Starting production servers..."
+	@pnpm start
