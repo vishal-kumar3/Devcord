@@ -53,6 +53,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
 
     async signIn({ account, profile }) {
+      console.log("signIn", account, profile)
       if (account && profile) {
         const devcordUser = await prisma.user.upsert({
           where: {
@@ -79,7 +80,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               provider: account.provider as string,
               providerAccountId: account.providerAccountId as string,
             },
-            userId: devcordUser.id,
           },
           update: {
             access_token: account.access_token as string,
@@ -102,7 +102,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         return true
       }
-
+      console.log("signIn failed")
       return false
     },
   },

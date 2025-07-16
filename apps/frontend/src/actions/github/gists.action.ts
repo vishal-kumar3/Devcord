@@ -1,4 +1,3 @@
-import asyncHandler from "@/utils/AsyncHandler";
 import { getAuthUser } from "../auth.action";
 import { githubApiHelper } from "@/utils/ApiHelpers";
 import { Messages } from "@/utils/enums";

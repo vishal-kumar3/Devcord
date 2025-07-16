@@ -1,5 +1,4 @@
 import { Server, Socket } from "socket.io";
-import { consumeMessage } from "./services/kafka.service.js";
 import {
   SOCKET_EVENTS,
 } from "@devcord/node-prisma/dist/constants/socket.const.js"
@@ -7,7 +6,6 @@ import { handleFriendEvents } from "./events/friend.socket.js";
 import { handleConversationEvents } from "./events/chat.event.js";
 
 export interface CustomSocket extends Socket {
-  room?: string
   userId?: string
 }
 
